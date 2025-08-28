@@ -1,4 +1,5 @@
 import pygame
+from pygame import SRCALPHA
 
 import app_data
 import engine_settings
@@ -29,21 +30,19 @@ if app_data.icon_img_path is not None:
 window = pygame.display.set_mode((window_size.width,window_size.height))
 game_o = Game(hws)
 
-cursor_img = [None,None]
+sprites_img = []
+try:
+    spritesheet = pygame.image.load("./assets/cursor/cursor.png")
+except:
+    spritesheet = pygame.image.load("../assets/cursor/cursor.png")
+for sprite in range(4):
+    temp = pygame.Surface((44,44),SRCALPHA)
+    temp.blit(spritesheet,(0,0),(44 * sprite,0,44,44))
+    sprites_img.append(temp)
 
-if app_data.custom_cursor["default"] is not None:
-    try:
-        cursor_img[0] = pygame.image.load(app_data.custom_cursor["default"])
-    except:
-        cursor_img[0] = pygame.image.load("." + app_data.custom_cursor["default"])
-    cursor_img[0] = pygame.cursors.Cursor((0,0),cursor_img[0])
-if app_data.custom_cursor["hover"] is not None:
-    try:
-        cursor_img[1] = pygame.image.load(app_data.custom_cursor["hover"])
-    except:
-        cursor_img[1] = pygame.image.load("." + app_data.custom_cursor["hover"])
-    cursor_img[1] = pygame.cursors.Cursor((0,0),cursor_img[1])
+cursor_img = [pygame.cursors.Cursor((22,22),sprites_img[0]),pygame.cursors.Cursor((22,22),sprites_img[1])]
 
+custom_gp_cursor = [pygame.cursors.Cursor((22,22),sprites_img[2]),pygame.cursors.Cursor((22,22),sprites_img[3])]
 
 clock = pygame.time.Clock()
 game_on = True
@@ -76,16 +75,23 @@ while game_on:
 
     game_o.update_and_draw(frame_data, window)
 
-    if frame_data.hovers:
-        if cursor_img[1] is None:
-            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+    if game_o.get_cur_scene() == 2:
+        if frame_data.hovers or frame_data.mouse_buttons[0]:
+            pygame.mouse.set_cursor(custom_gp_cursor[1])
         else:
-            pygame.mouse.set_cursor(cursor_img[1])
+            pygame.mouse.set_cursor(custom_gp_cursor[0])
+
     else:
-        if cursor_img[0] is None:
-            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+        if frame_data.hovers:
+            if cursor_img[1] is None:
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            else:
+                pygame.mouse.set_cursor(cursor_img[1])
         else:
-            pygame.mouse.set_cursor(cursor_img[0])
+            if cursor_img[0] is None:
+                pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+            else:
+                pygame.mouse.set_cursor(cursor_img[0])
 
     pygame.display.flip()
 

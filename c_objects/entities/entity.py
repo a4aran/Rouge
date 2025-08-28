@@ -14,6 +14,8 @@ class Entity:
 
         self.id = gen_id()
 
+        self.color = (255,255,255)
+
     def update(self,world: "World",frame_data: FrameData):
 
         print(self.id)
@@ -21,7 +23,7 @@ class Entity:
 
     def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
         offset_pos = self.hitbox.pos + offset
-        pygame.draw.circle(surf,(255,255,255),offset_pos,self.hitbox.radius)
+        pygame.draw.circle(surf,self.color,offset_pos,self.hitbox.radius)
 
     def clamp_pos(self, clamp_size: tuple[int,int]):
         radius = self.hitbox.radius

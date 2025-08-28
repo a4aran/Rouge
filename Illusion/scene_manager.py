@@ -35,3 +35,5 @@ class SceneManager:
     def add_scene(self,scene: Scene):
         self.__scenes.append(scene)
 
+    def get_cur_scene(self):
+        return self.__active_scene

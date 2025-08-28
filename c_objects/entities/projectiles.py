@@ -14,6 +14,7 @@ class Projectile(Entity):
         self.direction = direction
         self.damaged_entities = set()
         self.damage = damage
+        self.color = (255,0,0)
 
     def update(self,world: "World",frame_data: FrameData):
         vel = pygame.Vector2(1,0).rotate(self.direction).normalize()

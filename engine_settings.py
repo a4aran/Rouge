@@ -1,4 +1,4 @@
-desired_fps = 240
+desired_fps = 580
 max_delta_time = 0.03
 
 #debug

@@ -1,4 +1,5 @@
 import pygame
+from pygame import SRCALPHA
 
 from Illusion.frame_data_f import FrameData
 from ar_math_helper import angle_to_mouse
@@ -15,8 +16,22 @@ class Player(Entity):
         self.speed = 120
         self.cooldown = [0,0.5,False]
         self.id = "Player"
+        self.health = 100
+        self.super = {
+            "name": "dash",
+            "cooldown": [0,3,True],
+            "active": [0,0.5,False]
+        }
 
     def update(self,world: "World",frame_data: FrameData):
+        loc_speed = self.speed
+        if self.super["active"][2]:
+            loc_speed *= 2
+            self.super["active"][0] += frame_data.dt
+            if self.super["active"][0] > self.super["active"][1]:
+                self.super["active"][2] = False
+                self.super["active"][0] = 0
+
         direction = pygame.Vector2(0, 0)
 
         if frame_data.keys[pygame.K_w]:
@@ -31,11 +46,10 @@ class Player(Entity):
         if direction.length_squared() > 0:
             direction = direction.normalize()
 
-        velocity = direction * self.speed * frame_data.dt
+        velocity = direction * loc_speed * frame_data.dt
 
         self.hitbox.pos += velocity
 
-        self.clamp_pos(world.w_size)
 
         if self.cooldown[2]:
             self.cooldown[0] += frame_data.dt
@@ -51,3 +65,27 @@ class Player(Entity):
             .rotate(ang) + self.hitbox.pos,ang))
 
             self.cooldown[2] = True
+
+
+        if not self.super["cooldown"][2]:
+            self.super["cooldown"][0] += frame_data.dt
+            if self.super["cooldown"][0] >= self.super["cooldown"][1]:
+                self.super["cooldown"][0] = 0
+                self.super["cooldown"][2] = True
+                print("cooldown down")
+
+        if self.super["cooldown"][2] and frame_data.mouse_buttons[2] and not self.super["active"][2]:
+            self.super["active"][2] = True
+            self.super["cooldown"][2] = False
+
+        if loc_speed > self.speed:
+            print(loc_speed)
+
+        self.clamp_pos(world.w_size)
+
+
+    def damage(self,damager: Entity,amount: int):
+        if hasattr(damager,"damage_on_touch"):
+            damager.should_delete = True
+        self.health -= amount
+        print(self.health)

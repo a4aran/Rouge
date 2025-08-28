@@ -14,6 +14,10 @@ class Circle:
         distance = (self.pos - circle.pos).length()
         return distance <= (self.radius + circle.radius)
 
+    def circle_point_collide(self, point: pygame.Vector2) -> bool:
+        dist_sq = (self.pos - point).length_squared()
+        return dist_sq <= self.radius * self.radius
+
 def angle_to_mouse(pos: pygame.Vector2) -> float:
     mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
     delta = mouse_pos - pos

@@ -1,6 +1,6 @@
 import gl_var
 from CustomScenes.gameplay import GamePlaySC
-from CustomScenes.menus import MainMenuSC
+from CustomScenes.menus import MainMenuSC, RunOverSC
 from Illusion.game_manager import IllusionBuiltInsPreset
 
 
@@ -15,4 +15,7 @@ class Game(IllusionBuiltInsPreset):
 
         self._scene_manager.add_scene(MainMenuSC(self._importer, self._assets, self._music_manager, self._global_objects))
         self._scene_manager.add_scene(GamePlaySC(self._importer, self._assets, self._music_manager, self._global_objects))
+        self._scene_manager.add_scene(RunOverSC(self._importer, self._assets, self._music_manager, self._global_objects))
 
+    def get_cur_scene(self):
+        return self._scene_manager.get_cur_scene()
