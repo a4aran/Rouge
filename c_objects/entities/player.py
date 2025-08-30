@@ -16,7 +16,8 @@ class Player(Entity):
         self.speed = 120
         self.cooldown = [0,0.5,False]
         self.id = "Player"
-        self.health = 100
+        self.max_health = 100
+        self.health = self.max_health
         self.super = {
             "name": "dash",
             "cooldown": [0,3,True],

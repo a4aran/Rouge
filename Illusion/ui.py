@@ -78,12 +78,26 @@ class UI:
                 surface.blit(self.gen_frame(), self.parallax_pos)
 
         class Img:
-            def __init__(self,center_pos: tuple[float,float],img: pygame.Surface):
+            def __init__(self,name:str,center_pos: tuple[float,float],img: pygame.Surface): #add the naming
+                self.name = name
                 self.img = img.copy()
                 self.pos = (center_pos[0] -self.img.get_width()/2,center_pos[1] -self.img.get_height()/2)
+                self.no_calc_pos = center_pos #gime this
 
             def draw(self,surface: pygame.Surface):
                 surface.blit(self.img,self.pos)
+
+            #add a way to get/change the image
+
+            #add this
+            def change_img(self,img: pygame.Surface):
+                self.img = img
+                self.pos = (self.no_calc_pos[0] -self.img.get_width()/2,self.no_calc_pos[1] -self.img.get_height()/2)
+
+            def change_pos(self,center_pos: tuple[float,float]):
+                self.no_calc_pos = center_pos
+                self.pos = (self.no_calc_pos[0] -self.img.get_width()/2,self.no_calc_pos[1] -self.img.get_height()/2)
+            ##till here
 
         class TextDisplay:
             def __init__(self,name: str,font: TextRenderer,center_pos: tuple[float,float]):
@@ -119,6 +133,9 @@ class UI:
                     self.__should_reload = False
                 else:
                     raise AttributeError("Lack of attributes Text || Size || Color")
+
+            def get_text(self):
+                return self.__text
 
             def add_line(self, text: str):
                 self.__text.append(text)
@@ -237,6 +254,17 @@ class UI:
                         i = index
             if i is None:
                 print("'"+name+"' animation not found")
+                return
+            return self.surface_s[i]
+
+        def find_img(self,name:str): #add
+            i = None
+            for index, a in enumerate(self.surface_s):
+                if isinstance(a, self.Img):
+                    if a.name == name:
+                        i = index
+            if i is None:
+                print("'"+name+"' image not found")
                 return
             return self.surface_s[i]
 
@@ -386,9 +414,10 @@ class UI:
         if button_state == 1: temp.modify_hover_text(text_renderer,text,size,color)
         if button_state == 2: temp.modify_pressed_text(text_renderer,text,size,color)
 
-    def new_img(self,img: pygame.Surface,center_pos: pygame.Vector2):
+    def new_img(self,name:str,img: pygame.Surface,center_pos: pygame.Vector2): #edit
         self._hud.surface_s.append(
             self._hud.Img(
+                name, #edit
                 center_pos, img
             )
         )
@@ -426,6 +455,9 @@ class UI:
     def get_animation(self,name:str):
         return  self._hud.find_animation(name)
 
+    def get_img(self,name:str) -> _HUD.Img: #add
+        return self._hud.find_img(name)
+
     def update(self,frame_data: FrameData):
         self._hud.update(frame_data)
         self._gui.update(frame_data)
@@ -448,6 +480,7 @@ class UI:
             self._gui.data.pop(var_name)
         else:
             print("No variable " + var_name + " in data")
+
 
     def modify_parallax(self,parallax_name: str,speed = None, stepping = None, direction = None):
         for par in self._hud.surface_s:
