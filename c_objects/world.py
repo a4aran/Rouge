@@ -2,6 +2,7 @@ import random
 
 import pygame
 
+import current_game_run_data
 import gl_var
 from Illusion.frame_data_f import FrameData
 from ar_math_helper import Circle
@@ -30,6 +31,8 @@ class World:
         self.internal_pause = False
         self.pause_timer = [0,0]
 
+        self.upgrade = [False,0]
+
     def update(self,fd: FrameData):
         if not self.game_paused:
             self.player.update(self,fd)
@@ -40,7 +43,7 @@ class World:
 
             for e in self.entities:
                 if self.player.entity_check_collision(e) and hasattr(e,"damage_on_touch"):
-                    self.player.damage(e,10)
+                    self.player.damage(e,e.a_atk_dmg)
                 for p in self.projectiles:
                     if e.entity_check_collision(p) and e.id not in p.damaged_entities:
                         p.damage_entity(e)
@@ -55,8 +58,7 @@ class World:
                 gl_var.entities_id_counter = 0
                 self.projectiles = []
                 self.entities = []
-                self.wave_count += 1
-                self.start_wave()
+                self.wave_end()
 
         if self.game_paused:
             if self.internal_pause:
@@ -80,13 +82,15 @@ class World:
         #     self.entities.append(FasterSAiEnemy(try_pos))
         # self.player.hitbox.pos.xy = (270,270)
         # self.wave_on = True
+        self.wave_count += 1
         map_center = pygame.Vector2(self.w_size[0]/2,self.w_size[1]/2)
-        length_range = (100,int(self.w_size[0]/2 - 20))
+        length_range = (150,int(self.w_size[0]/2 - 20))
         for n in range(self.wave_count + 4):
             vector = pygame.Vector2(random.randint(length_range[0],length_range[1]),0).rotate(random.randint(0,359))
             try_pos = vector + map_center
             self.spawn_enemy(try_pos)
         self.player.hitbox.pos.xy = (270,270)
+        self.player.reset_cooldowns()
         self.wave_on = True
 
         self.should_show_vfx = True
@@ -135,3 +139,24 @@ class World:
 
         self.should_show_vfx = False
         self.vfx_to_show = None
+        self.upgrade = [False, 0]
+
+        current_game_run_data.cur_run_data.reset()
+        self.player.reset()
+
+    def wave_end(self):
+        if self.wave_count > 1:
+            if self.wave_count % 2 == 0:
+                self.upgrade[0] = True
+                self.upgrade[1] = 1
+            elif self.wave_count % 5 == 0:
+                self.upgrade[0] = True
+                self.upgrade[1] = 2
+            else:
+                self.start_wave()
+        else:
+            self.start_wave()
+
+    def resume_after_upgrade(self):
+        self.upgrade = [False, 0]
+        self.start_wave()

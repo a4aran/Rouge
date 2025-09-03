@@ -449,6 +449,9 @@ class UI:
             )
         )
 
+    def is_button_hovered(self,name:str) -> bool: #add
+        return self._gui.find_button(name).current_state == self._gui.Button.State.HOVERED
+
     def get_text_display(self,name: str) -> _HUD.TextDisplay:
         return  self._hud.find_text_display(name)
 

@@ -28,3 +28,26 @@ def angle_to_mouse(pos: pygame.Vector2) -> float:
 def gen_id():
     gl_var.entities_id_counter +=1
     return gl_var.entities_id_counter
+
+class FormulaProvider:
+    def __init__(self):
+        pass
+
+    @staticmethod
+    def damage_upgrade(wave,random):
+        mult = 1.1
+        if wave > 10:
+            mult =0.9
+            if wave > 15:
+                mult = 0.7
+        return max(2,round(1*wave*0.8 * random * mult))
+
+    @staticmethod
+    def b_speed_upgrade(wave,random):
+        return max(20,round(3*wave*0.7 * random))
+
+    @staticmethod
+    def firerate_upgrade(wave,random):
+        return max(0.15,round((0.02 * wave*0.5) * random,2))
+
+formulas = FormulaProvider()

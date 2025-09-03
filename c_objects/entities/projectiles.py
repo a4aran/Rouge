@@ -15,6 +15,7 @@ class Projectile(Entity):
         self.damaged_entities = set()
         self.damage = damage
         self.color = (255,0,0)
+        self.effects = []
 
     def update(self,world: "World",frame_data: FrameData):
         vel = pygame.Vector2(1,0).rotate(self.direction).normalize()
@@ -31,9 +32,24 @@ class Projectile(Entity):
 
     def damage_entity(self, entity: Entity):
         if isinstance(entity,Enemy):
-            entity.damage(self.damage)
+            entity.damage(self.damage,self.effects)
         self.damaged_entities.add(entity.id)
 
-class Bullet(Projectile):
-    def __init__(self, pos: pygame.Vector2, direction: float):
-        super().__init__(pos, 6, direction, 170,10)
+class PierceProj(Projectile):
+    def __init__(self, pos: pygame.Vector2, direction: float,dmg: float,spd: float,pierce: int):
+        super().__init__(pos, 6, direction, spd,dmg)
+        self.pierce = pierce
+
+    def update(self,world: "World",frame_data: FrameData):
+        super().update(world,frame_data)
+        if self.pierce < 1: self.should_delete = True
+
+    def damage_entity(self, entity: Entity):
+        super().damage_entity(entity)
+        self.pierce -= 1
+
+class FreezePP(PierceProj):
+    def __init__(self, pos: pygame.Vector2, direction: float,dmg: float,spd: float,pierce: int):
+       super().__init__(pos,direction,dmg,spd,pierce)
+       self.effects = [["freeze", 0.5]]
+       self.color = (0,255,255)

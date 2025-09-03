@@ -46,6 +46,7 @@ class RunOverSC(Scene):
         temp.add_text_to_button("main_scene_btn",text_r,"Return",50,(255,255,255))
 
     def _update(self, frame_data: FrameData):
+        super()._update(frame_data)
         if "previous_scene_data" in self.data:
             temp = self.get_ui("default").get_text_display("wave_info")
             if not temp.get_text() == f'Died on a wave {self.data["previous_scene_data"]['wave']}':

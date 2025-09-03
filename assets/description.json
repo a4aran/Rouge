@@ -1,0 +1,91 @@
+{
+    "1": {
+        "damage": {
+            "title": "Damage Upgrade",
+            "description": [
+                [
+                    "Adds "
+                ],
+                [
+                    " to bullet damage"
+                ]
+            ]
+        },
+        "pierce": {
+            "title": "Pierce Upgrade",
+            "description": [
+                [
+                    "Increases bullet pierce by "
+                ],
+                []
+            ]
+        },
+        "bullet_speed": {
+            "title": "B-Speed Upgrade",
+            "description": [
+                [
+                    "Adds "
+                ],
+                [
+                    "to bullet's speed"
+                ]
+            ]
+        },
+        "firerate": {
+            "title": "Firerate Upgrade",
+            "description": [
+                [
+                    "Increases the rate of fire",
+                    "by "
+                ],
+                []
+            ]
+        },
+        "heal": {
+            "title": "Heal",
+            "description": [
+                [
+                    "Heals you "
+                ],
+                [
+                    "*Can not overflow max HP*"
+                ]
+            ]
+        }
+    },
+    "2": {
+        "freezing_b": {
+            "title": "Freezing Bullets",
+            "description": [
+                [
+                    "Every "
+                ],
+                [
+                    "th bullet freezes",
+                    "enemies"
+                ]
+            ]
+        },
+        "triple_shot": {
+            "title": "Triple Shot",
+            "description": [
+                [
+                    "You have "
+                ],
+                [
+                    "chance to shoot 3 bullets"
+                ]
+            ]
+        },
+        "double_trouble": {
+            "title": "Double Trouble",
+            "description": [
+                [
+                    "Every chance based effect",
+                    "is twice as likly to happen"
+                ],
+                []
+            ]
+        }
+    }
+}

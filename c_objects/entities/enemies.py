@@ -1,22 +1,67 @@
+import copy
 import random
 
 import pygame
+from pygame import SRCALPHA
 
+import gl_var
 from Illusion.frame_data_f import FrameData
 from c_objects.entities.entity import Entity
 
 
 class Enemy(Entity):
-    def __init__(self, pos: pygame.Vector2, hitbox_radius: float,health: float,speed: float):
+    def __init__(self, pos: pygame.Vector2, hitbox_radius: float,health: float,speed: float,dmg: float = 10):
         super().__init__(pos, hitbox_radius)
         self.health = health
         self.speed = speed
         self.color = (255,255,0)
+        self.status_effects = copy.deepcopy(gl_var.status_effect)
+        self.atk_dmg = dmg
+        self.a_atk_dmg = dmg
 
-    def damage(self,amount: float):
+    def damage(self,amount: float,effects: list = False):
         self.health -= amount
-        if self.health <= 0: self.should_delete = True
+        if self.health <= 0:
+            self.should_delete = True
+            return
+        if effects:
+            for ef in effects:
+                if ef[0] == "freeze":
+                    self.apply_freeze(ef[1])
         self.trigger_flash()
+
+    def apply_freeze(self,time: float):
+        self.status_effects["time"]["freeze"][0] = 0
+        self.status_effects["time"]["freeze"][1] = time
+        self.status_effects["time"]["freeze"][2] = True
+
+    def update_status_effects(self,fd: FrameData):
+        for effect in self.status_effects["time"]:
+            data = self.status_effects["time"][effect]
+            if data[2]:
+                data[0] += fd.dt
+                if data[0] >= data[1]:
+                    data[0] = 0
+                    data[1] = 0
+                    data[2] = False
+
+    def get_local_vars(self):
+        locs = [self.speed,self.atk_dmg]
+        if self.status_effects["time"]["freeze"][2]: locs[0] = 0
+        return locs
+
+    def draw_effects(self):
+        cent = (self.hitbox.radius*2,self.hitbox.radius*2)
+        surf = pygame.Surface((self.hitbox.radius*4,self.hitbox.radius*4),SRCALPHA)
+
+        if self.status_effects["time"]["freeze"][2]:
+            pygame.draw.circle(surf,(100,255,255,100),cent,self.hitbox.radius*1.5)
+
+        return surf
+
+    def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
+        surf.blit(self.draw_effects(),self.hitbox.pos + offset + pygame.Vector2(self.hitbox.radius * -2,self.hitbox.radius * -2))
+        super().draw(surf,offset)
 
 class SimpleAIEnemy(Enemy):
     def __init__(self, pos: pygame.Vector2,health = 50,spd = 50,cooldown = 0.2,length_range: tuple[int,int] = (50,130)):
@@ -29,11 +74,13 @@ class SimpleAIEnemy(Enemy):
         self.outline_color = (255,0,0)
 
     def update(self,world: "World",frame_data: FrameData):
+        self.update_status_effects(frame_data)
+        loc_speed,self.a_atk_dmg = self.get_local_vars()
         self.flash_countdown(frame_data.dt)
         if not self.cooldown[2] and self.direction is None:
             self.randomize_goal(world.w_size)
         if self.direction is not None and self.length > 0:
-            vel = pygame.Vector2(1,0).rotate(self.direction).normalize() * self.speed * frame_data.dt
+            vel = pygame.Vector2(1,0).rotate(self.direction).normalize() * loc_speed * frame_data.dt
             self.hitbox.pos += vel
             self.length -= vel.length()
         if self.length <= 0:
@@ -86,13 +133,16 @@ class DoubleSAiEnemy(SimpleAIEnemy):
         super().__init__(pos,health,spd,cooldown,length_range)
         self.previous_dir = 0
         self.color = (0,0,0)
+        self.other_goal_chance = 0.5
 
     def update(self, world: "World", frame_data: FrameData):
+        self.update_status_effects(frame_data)
+        loc_speed, self.a_atk_dmg = self.get_local_vars()
         self.flash_countdown(frame_data.dt)
         if not self.cooldown[2] and self.direction is None:
             self.roll_randomize_goal(world)
         if self.direction is not None and self.length > 0:
-            vel = pygame.Vector2(1, 0).rotate(self.direction).normalize() * self.speed * frame_data.dt
+            vel = pygame.Vector2(1, 0).rotate(self.direction).normalize() * loc_speed * frame_data.dt
             self.hitbox.pos += vel
             self.length -= vel.length()
         if self.length <= 0:
@@ -108,8 +158,7 @@ class DoubleSAiEnemy(SimpleAIEnemy):
             self.previous_dir = self.direction
 
     def roll_randomize_goal(self,world: "World"):
-        r = random.randint(0,1)
-        if r == 1:
+        if random.random() < self.other_goal_chance:
             self.randomize_goal(world.w_size)
         else:
             self.other_goal_randomizer(world)
