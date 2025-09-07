@@ -35,17 +35,37 @@ class Player(Entity):
         self.bullet_counter = 0
 
         self.hud_firerate = self.firerate
+        self.hud_dmg = self.attack_damage
+        self.hud_b_spd = self.b_speed
 
         self.autofire_kc = False
         self.autofire = False
 
+        self.multipliers = {
+            "firerate": 1,
+            "damage": 1,
+            "bullet_speed": 1
+        }
+
     def update(self,world: "World",frame_data: FrameData):
+        self.multipliers = {
+            "firerate": 1,
+            "damage": 1,
+            "bullet_speed": 1
+        }
         if cur_run_data.request_player_upgrade:
             temp = cur_run_data.active_upgrades
             self.attack_damage = 10 + temp[0]["damage"]
             self.pierce = 1 + temp[0]["pierce"]
             self.b_speed = 170 + temp[0]["bullet_speed"]
             self.firerate = 1 + temp[0]["firerate"]
+        for lvl_2 in cur_run_data.active_upgrades[1]:
+            if lvl_2 != "double_trouble":
+                if cur_run_data.active_upgrades[1][lvl_2][0]:
+                    self.multipliers[cur_run_data.active_upgrades[1][lvl_2][2]] += cur_run_data.active_upgrades[1][lvl_2][3]
+        for kind in self.multipliers:
+            self.multipliers[kind] = max(0.2,self.multipliers[kind])
+
         if cur_run_data.heal_q != 0:
             self.health += cur_run_data.heal_q
             cur_run_data.heal_q = 0
@@ -62,8 +82,13 @@ class Player(Entity):
                 self.super["active"][2] = False
                 self.super["active"][0] = 0
         self.update_shooting_cooldown(loc_firerate)
-        loc_firerate = round(loc_firerate,2)
+
+        loc_firerate = round(loc_firerate * self.multipliers["firerate"],2)
+        loc_dmg = round(self.attack_damage * self.multipliers["damage"],1)
+        loc_b_spd = round(self.b_speed * self.multipliers["bullet_speed"],1)
         self.hud_firerate = loc_firerate
+        self.hud_dmg = round(loc_dmg)
+        self.hud_b_spd = loc_b_spd
 
         direction = pygame.Vector2(0, 0)
 
@@ -109,17 +134,10 @@ class Player(Entity):
             for ang in angles:
                 if data[0]:
                     if self.bullet_counter % data[1] == 0:
-                        world.projectiles.append(FreezePP(
-                            pygame.Vector2(self.hitbox.radius, 0)
-                            .rotate(ang) + self.hitbox.pos, ang, self.attack_damage,
-                            self.b_speed, self.pierce))
+                        self.shoot(world,"freeze",ang,loc_dmg,loc_b_spd)
                         b_shot = True
                 if not b_shot:
-                    world.projectiles.append(PierceProj(
-                    pygame.Vector2(self.hitbox.radius,0)
-                    .rotate(ang) + self.hitbox.pos,ang,self.attack_damage,
-                    self.b_speed,self.pierce))
-
+                    self.shoot(world, "normal", ang, loc_dmg, loc_b_spd)
             self.cooldown[2] = True
 
         if not self.super["cooldown"][2]:
@@ -134,17 +152,20 @@ class Player(Entity):
 
         self.clamp_pos(world.w_size)
 
-    def shoot(self,world: "World",type: str,angle):
+    def shoot(self,world: "World",type: str,angle,dmg: float, b_spd: float):
+        bc = 0
+        if cur_run_data.active_upgrades[1]["bounce"][0]:
+            bc = cur_run_data.active_upgrades[1]["bounce"][1]
         if type == "normal":
             world.projectiles.append(PierceProj(
                 pygame.Vector2(self.hitbox.radius, 0)
-                .rotate(angle) + self.hitbox.pos, angle, self.attack_damage,
-                self.b_speed, self.pierce))
+                .rotate(angle) + self.hitbox.pos, angle, dmg,
+                b_spd, self.pierce,bc))
         elif type == "freeze":
             world.projectiles.append(FreezePP(
                 pygame.Vector2(self.hitbox.radius, 0)
-                .rotate(angle) + self.hitbox.pos, angle, self.attack_damage,
-                self.b_speed, self.pierce))
+                .rotate(angle) + self.hitbox.pos, angle, dmg,
+                b_spd, self.pierce,bc))
 
     def update_shooting_cooldown(self,fire_rate):
         self.cooldown[1] = self.base_fire_cooldown / fire_rate

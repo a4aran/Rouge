@@ -4,8 +4,10 @@ import random
 import pygame
 from pygame import SRCALPHA
 
+import ar_math_helper
 import gl_var
 from Illusion.frame_data_f import FrameData
+from c_objects.entities import projectiles
 from c_objects.entities.entity import Entity
 
 
@@ -78,7 +80,7 @@ class SimpleAIEnemy(Enemy):
         loc_speed,self.a_atk_dmg = self.get_local_vars()
         self.flash_countdown(frame_data.dt)
         if not self.cooldown[2] and self.direction is None:
-            self.randomize_goal(world.w_size)
+            self.randomize_goal(world.w_size,world.boss,world.player)
         if self.direction is not None and self.length > 0:
             vel = pygame.Vector2(1,0).rotate(self.direction).normalize() * loc_speed * frame_data.dt
             self.hitbox.pos += vel
@@ -93,7 +95,7 @@ class SimpleAIEnemy(Enemy):
                 self.cooldown[2] = False
         self.clamp_pos(world.w_size)
 
-    def randomize_goal(self,clamp_size: tuple[int, int]):
+    def randomize_goal(self,clamp_size: tuple[int, int],boss,player):
         self.direction = random.randint(0, 359)
         self.length = random.randint(self.length_range[0], self.length_range[1])
 
@@ -102,8 +104,13 @@ class SimpleAIEnemy(Enemy):
         x, y = eta
         if (x < 0 + radius or x > clamp_size[0] - radius or
                 y < 0 + radius or y > clamp_size[1] - radius):
-            self.direction = random.randint(0, 359)
-            self.length = random.randint(50, 90)
+            self.direction =  ar_math_helper.angle_to_target(self.hitbox.pos,player.hitbox.pos)
+            print("to player")
+        if boss:
+            for b in boss:
+                if isinstance(b,Entity) and b.hitbox.line_circle_collision(self.hitbox.pos,eta):
+                    self.direction =  ar_math_helper.angle_to_target(self.hitbox.pos,player.hitbox.pos)
+                    print("to player")
 
     def clamp_pos(self, clamp_size: tuple[int, int]):
         radius = self.hitbox.radius
@@ -117,9 +124,16 @@ class SimpleAIEnemy(Enemy):
         self.hitbox.pos.x = min(max(0 + radius,self.hitbox.pos.x),clamp_size[0] - radius)
         self.hitbox.pos.y = min(max(0 + radius,self.hitbox.pos.y),clamp_size[1] - radius)
 
+    def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
+        super().draw(surf,offset)
+        # if self.direction is not  None:
+        #     vec = pygame.Vector2(1,0).rotate(self.direction).normalize() * 100
+        #     vec = vec + self.hitbox.pos + offset
+        #     pygame.draw.line(surf,(255,0,0),self.hitbox.pos+offset,vec,4)
+
 class FasterSAiEnemy(SimpleAIEnemy):
-    def __init__(self, pos: pygame.Vector2,speed_mult = 1.2):
-        super().__init__(pos,spd=30,cooldown=0.5,length_range=(130,200))
+    def __init__(self, pos: pygame.Vector2,health = 50,spd=30,speed_mult = 1.2):
+        super().__init__(pos,health=health,spd=spd,cooldown=0.5,length_range=(130,250))
         self.add_speed = self.speed
         self.spd_mult = speed_mult
         self.color = (255,150,0)
@@ -134,6 +148,7 @@ class DoubleSAiEnemy(SimpleAIEnemy):
         self.previous_dir = 0
         self.color = (0,0,0)
         self.other_goal_chance = 0.5
+        self.atk_dmg = 15
 
     def update(self, world: "World", frame_data: FrameData):
         self.update_status_effects(frame_data)
@@ -159,7 +174,7 @@ class DoubleSAiEnemy(SimpleAIEnemy):
 
     def roll_randomize_goal(self,world: "World"):
         if random.random() < self.other_goal_chance:
-            self.randomize_goal(world.w_size)
+            self.randomize_goal(world.w_size,world.boss,world.player)
         else:
             self.other_goal_randomizer(world)
 
@@ -178,3 +193,21 @@ class DoubleSAiEnemy(SimpleAIEnemy):
                 y < 0 + radius or y > clamp_size[1] - radius):
             self.direction = random.randint(0, 359)
             self.length = random.randint(50, 90)
+
+class ShootingEnemy(SimpleAIEnemy):
+    def __init__(self, pos: pygame.Vector2,health = 50,spd = 50):
+        super().__init__(pos,health=health,spd=spd)
+        self.shooting_cooldown = [0,1.25]
+        self.color = (0,255,0)
+        self.outline_color = (0,0,0)
+        self.damage_on_touch = False
+
+    def update(self,world: "World",frame_data: FrameData):
+        super().update(world,frame_data)
+        self.shooting_cooldown[0] += frame_data.dt
+        if self.shooting_cooldown[0] >= self.shooting_cooldown[1]:
+            self.shooting_cooldown[0] = 0
+
+            ang = self.hitbox.pos.angle_to(world.player.hitbox.pos) if random.random() < 0.1 else random.randint(0,360)
+
+            world.enemy_projectiles.append(projectiles.EnemyProj(self.hitbox.pos.copy(),ang,100,4))

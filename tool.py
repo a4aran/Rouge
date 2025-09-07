@@ -12,29 +12,26 @@ else:
 
 print("Add a new description for an upgrade")
 print("Enter the upgrade level")
-level = input()
+level = input().strip()
 print("Enter the upgrade internal name")
-i_name = input()
+i_name = input().strip()
 print("Enter the title for the upgrade")
-title = input()
-print("Description writing starts now")
-print("You'll first write the half before the stats")
-print("In order to end this part of writing you'll need to enter '$$$'")
+title = input().strip()
 
-desc_part_1 = []
+print("Now write the full description.")
+print("You can use @1, @2, ... as placeholders for variables.")
+print("Use a new line for each line of text.")
+print("When you are done, enter '$$$' on a new line.")
+
+desc_lines = []
 while True:
     temp = input()
     if temp == "$$$":
         break
-    desc_part_1.append(temp)
+    desc_lines.append(temp)
 
-print("Now write the half after the stats (end with $$$)")
-desc_part_2 = []
-while True:
-    temp = input()
-    if temp == "$$$":
-        break
-    desc_part_2.append(temp)
+# Join multiple lines with \n so they can be split later by the compiler
+desc_text = "\n".join(desc_lines)
 
 # Ensure the level exists in the dict
 if str(level) not in data:
@@ -42,11 +39,8 @@ if str(level) not in data:
 
 # Insert/overwrite this upgrade
 data[str(level)][str(i_name)] = {
-    "title": str(title),
-    "description": [
-        desc_part_1,
-        desc_part_2
-    ]
+    "title": title,
+    "description": desc_text
 }
 
 print("Your description looks like this:")

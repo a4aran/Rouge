@@ -2,90 +2,41 @@
     "1": {
         "damage": {
             "title": "Damage Upgrade",
-            "description": [
-                [
-                    "Adds "
-                ],
-                [
-                    " to bullet damage"
-                ]
-            ]
+            "description": "Adds @1 to bullet damage"
         },
         "pierce": {
             "title": "Pierce Upgrade",
-            "description": [
-                [
-                    "Increases bullet pierce by "
-                ],
-                []
-            ]
+            "description": "Increases bullet pierce by @1"
         },
         "bullet_speed": {
             "title": "B-Speed Upgrade",
-            "description": [
-                [
-                    "Adds "
-                ],
-                [
-                    "to bullet's speed"
-                ]
-            ]
+            "description": "Adds @1 to bullet's speed"
         },
         "firerate": {
             "title": "Firerate Upgrade",
-            "description": [
-                [
-                    "Increases the rate of fire",
-                    "by "
-                ],
-                []
-            ]
+            "description": "Increases the rate of fire by @1"
         },
         "heal": {
             "title": "Heal",
-            "description": [
-                [
-                    "Heals you "
-                ],
-                [
-                    "*Can not overflow max HP*"
-                ]
-            ]
+            "description": "Heals you @1\n*Can not overflow max HP*"
         }
     },
     "2": {
         "freezing_b": {
             "title": "Freezing Bullets",
-            "description": [
-                [
-                    "Every "
-                ],
-                [
-                    "th bullet freezes",
-                    "enemies"
-                ]
-            ]
+            "description": "Every @1th bullet freezes enemies\n*@2% to firerate*"
         },
         "triple_shot": {
             "title": "Triple Shot",
-            "description": [
-                [
-                    "You have "
-                ],
-                [
-                    "chance to shoot 3 bullets"
-                ]
-            ]
+            "description": "You have @1% chance to shoot 3 bullets\n*@2% to firerate*"
         },
         "double_trouble": {
             "title": "Double Trouble",
-            "description": [
-                [
-                    "Every chance based effect",
-                    "is twice as likly to happen"
-                ],
-                []
-            ]
+            "description": "Every chance based effect\nis twice as likely to happen"
+        },
+        "bounce": {
+            "title": "bounce",
+            "description": "Your bullets have @1% chance to\nbounce off walls\n*@2% damage*"
         }
     }
 }

@@ -75,8 +75,16 @@ class GamePlaySC(Scene):
         ba_ui.get_text_display("wave_info").set_all((0,0,0),80,"")
         ba_ui.should_show = False
 
+        self.create_ui("boss_hp")
+        boss_hp_ui = self.get_ui("boss_hp")
+        temp_img = pygame.Surface((400,40))
+        temp_img.fill((0,0,0))
+        pygame.draw.rect(temp_img,(255,0,0),(5,5,390,30))
+        boss_hp_ui.new_img("boss_hp_indicator",temp_img,(gl_var.window_center[0],30))
+
         self.create_ui("pause")
         p_ui = self.get_ui("pause")
+        temp_img = pygame.Surface((window_size.width,window_size.height),SRCALPHA)
         temp_img.fill((0,0,0,128))
         p_ui.new_img("bg",temp_img,gl_var.window_center)
         p_ui.new_text_display("pause_text",global_objects.get_font("title_font"),gl_var.window_center)
@@ -116,6 +124,7 @@ class GamePlaySC(Scene):
         self.last_frame_dmg = 0
         self.last_frame_pi = 0
         self.last_frame_spd = 0
+        self.last_frame_boss_hp = 0
 
         self.current_state = self.State.PLAYING
         self.upgrade_level = 0
@@ -218,17 +227,29 @@ class GamePlaySC(Scene):
                 self.last_frame_fr = temp.player.hud_firerate
                 self.get_ui("hud").get_text_display("fr_amount").set_text([f'{self.last_frame_fr}x'])
 
-            if temp.player.attack_damage != self.last_frame_dmg:
-                self.last_frame_dmg = temp.player.attack_damage
+            if temp.player.hud_dmg != self.last_frame_dmg:
+                self.last_frame_dmg = temp.player.hud_dmg
                 self.get_ui("hud").get_text_display("dmg_amount").set_text([f'{self.last_frame_dmg}'])
 
             if temp.player.pierce != self.last_frame_pi:
                 self.last_frame_pi = temp.player.pierce
                 self.get_ui("hud").get_text_display("pierce_amount").set_text([f'{self.last_frame_pi}'])
 
-            if temp.player.b_speed != self.last_frame_spd:
-                self.last_frame_spd = temp.player.b_speed
+            if temp.player.hud_b_spd != self.last_frame_spd:
+                self.last_frame_spd = temp.player.hud_b_spd
                 self.get_ui("hud").get_text_display("speed_amount").set_text([f'{self.last_frame_spd}'])
+
+            if temp.is_boss_wave:
+                self.get_ui("boss_hp").should_show = True
+                if self.last_frame_boss_hp != temp.combined_boss_hp:
+                    self.last_frame_boss_hp = temp.combined_boss_hp
+                    boos_hp_display_width = 390 * (temp.combined_boss_hp / temp.combined_boss_max_hp)
+                    temp_img = pygame.Surface((400, 40))
+                    temp_img.fill((0, 0, 0))
+                    pygame.draw.rect(temp_img, (255, 0, 0), (5, 5, boos_hp_display_width, 30))
+                    self.get_ui("boss_hp").get_img("boss_hp_indicator").change_img(temp_img)
+            else:
+                self.get_ui("boss_hp").should_show = False
 
 
     def _draw(self,surface: pygame.Surface):

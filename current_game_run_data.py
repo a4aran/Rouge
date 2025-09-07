@@ -11,9 +11,10 @@ class RunManager:
                 "firerate": 0,
             },
             {
-                "freezing_b": [False,10],
-                "triple_shot": [False,0.10],
-                "double_trouble": [False]
+                "freezing_b": [False, 10, "firerate", -0.1],
+                "triple_shot": [False, 0.10, "firerate", -0.1],
+                "double_trouble": [False, -10],
+                "bounce": [False, 0.2, "damage", -0.1]
             }
         ]
 
@@ -37,9 +38,10 @@ class RunManager:
         for kind in level:
             level[kind] = 0
         self.active_upgrades[1]={
-                "freezing_b": [False,10],
-                "triple_shot": [False,0.10],
-                "double_trouble": [False]
+                "freezing_b": [False, 10, "firerate", -0.1],
+                "triple_shot": [False, 0.10, "firerate", -0.1],
+                "double_trouble": [False, -10],
+                "bounce": [False,0.2,"damage",-0.1]
             }
 
         self.heal_q = 0
@@ -54,5 +56,11 @@ class RunManager:
         if self.get_second_lvl("double_trouble")[0]:
             chance *= 2
         return random.random() <= chance
+
+    def chance_mult(self):
+        m = 1
+        if self.get_second_lvl("double_trouble")[0]:
+            m *= 2
+        return m
 
 cur_run_data = RunManager()

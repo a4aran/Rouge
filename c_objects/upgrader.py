@@ -92,25 +92,30 @@ class Upgrader:
                 return random.choice(choices)
         def get_stats(self,wave):
             r = random.randint(70,125) / 100
-            temp = 0
+            temp = []
             if self.level == 1:
                 if self.kind == "damage":
-                    temp = formulas.damage_upgrade(wave,r)
+                    temp.append(formulas.damage_upgrade(wave))
                 elif self.kind == "pierce":
-                    temp = 1
+                    temp.append(1)
                 elif self.kind == "bullet_speed":
-                    temp = formulas.b_speed_upgrade(wave,r)
+                    temp.append(formulas.b_speed_upgrade(wave))
                 elif self.kind == "firerate":
-                    temp = formulas.firerate_upgrade(wave,r)
+                    temp.append(formulas.firerate_upgrade(wave))
                 elif self.kind == "heal":
-                    temp = 10
+                    temp.append(10)
             if self.level == 2:
                 if self.kind == "freezing_b":
-                    temp = f"{cur_run_data.active_upgrades[1]["freezing_b"][1]}th"
+                    temp.append(cur_run_data.active_upgrades[1]["freezing_b"][1])
+                    temp.append(round(cur_run_data.active_upgrades[1]["freezing_b"][3] * 100))
                 elif self.kind == "triple_shot":
-                    temp = f"{round(cur_run_data.active_upgrades[1]["triple_shot"][1] * 100)}%"
+                    temp.append(round(cur_run_data.active_upgrades[1]["triple_shot"][1] * 100 * cur_run_data.chance_mult()))
+                    temp.append(round(cur_run_data.active_upgrades[1]["triple_shot"][3] * 100))
+                elif self.kind == "bounce":
+                    temp.append(round(cur_run_data.active_upgrades[1]["bounce"][1] * 100 * cur_run_data.chance_mult()))
+                    temp.append(round(cur_run_data.active_upgrades[1]["bounce"][3] * 100))
                 elif self.kind == "double_trouble":
-                    temp = ""
+                    temp.append("")
             return temp
 
 
@@ -134,7 +139,7 @@ class Upgrader:
                     cur_run_data.heal_q = 10
                     self.should_end = True
                 else:
-                    cur_run_data.active_upgrades[self.picked.level-1][self.picked.kind] += self.picked.stats
+                    cur_run_data.active_upgrades[self.picked.level-1][self.picked.kind] += self.picked.stats[0]
                     cur_run_data.round_active_upgrades()
                     cur_run_data.request_player_upgrade = True
                     self.should_end = True

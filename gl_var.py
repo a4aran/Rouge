@@ -12,4 +12,4 @@ status_effect = {
 }
 
 level_1_upgrade_list = ["damage","pierce","bullet_speed","firerate"]
-level_2_upgrade_list = ["freezing_b","triple_shot","double_trouble"]
+level_2_upgrade_list = ["freezing_b","triple_shot","double_trouble","bounce"]
