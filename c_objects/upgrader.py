@@ -222,12 +222,11 @@ class Upgrader:
         self.should_end = False
 
     def populate_upgrades(self,level,wave,player_hp,player_max_hp):
-        true_amount = []
-        level, up_to_choose = self.check_levels(level,true_amount)
 
         r = random.randint(100,140)
         r /= 100
         ah = player_hp < (player_max_hp * r)/2
+
         self.upgrades = []
         self.upgrades.append(self._Upgrade(level,self.up_poses[0],wave,ah,true_amount))
         temp = self.compiler.get_compiled_text(self.upgrades[0].level,self.upgrades[0].kind,self.upgrades[0].stats)
@@ -235,12 +234,6 @@ class Upgrader:
         self.ui.get_text_display("up_1_title").set_text(temp[0])
         self.ui.get_text_display("up_1_text").set_text(temp[1])
 
-        exc = true_amount.copy()
-        exc.append(self.upgrades[0].kind)
-
-        if up_to_choose == 1:
-            level = 1
-            exc = None
         self.upgrades.append(self._Upgrade(level,self.up_poses[1],wave,ah,exc))
         temp = self.compiler.get_compiled_text(self.upgrades[1].level,self.upgrades[1].kind,self.upgrades[1].stats)
         self.ui.get_text_display("up_2_title").set_size(45 if len(temp[0][0]) < 15 else 35)
