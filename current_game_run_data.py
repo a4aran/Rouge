@@ -14,7 +14,9 @@ class RunManager:
                 "freezing_b": [False, 10, "firerate", -0.1],
                 "triple_shot": [False, 0.10, "firerate", -0.1],
                 "double_trouble": [False, -10],
-                "bounce": [False, 0.2, "damage", -0.1]
+                "bounce": [False, 0.2, "damage", -0.1],
+                "blitz": [False,2,"damage",-0.25],
+                "particle_accelerator": [False,0.01,"bullet_speed",-0.3]
             },
             {
                 "shoot_on_death": [False,1,4]
@@ -43,11 +45,13 @@ class RunManager:
         level = self.active_upgrades[0]
         for kind in level:
             level[kind] = 0
-        self.active_upgrades[1]={
+        self.active_upgrades[1]=            {
                 "freezing_b": [False, 10, "firerate", -0.1],
                 "triple_shot": [False, 0.10, "firerate", -0.1],
                 "double_trouble": [False, -10],
-                "bounce": [False,0.2,"damage",-0.1]
+                "bounce": [False, 0.2, "damage", -0.1],
+                "blitz": [False,1,"damage",-0.25],
+                "particle_accelerator": [False,0.01,"bullet_speed",-0.4]
             }
         self.active_upgrades[2]={
                 "shoot_on_death": [False, 1, 4]
@@ -69,6 +73,12 @@ class RunManager:
             chance *= 2
         return random.random() <= chance
 
+    def get_blitz_additional_dmg(self,firerate:float):
+        return int(int(firerate) * self.get_second_lvl("blitz")[1]) if self.get_second_lvl("blitz")[0] else 0
+
+    def get_PA_additional_fr(self,b_spd:float):
+        return int(b_spd * self.get_second_lvl("particle_accelerator")[1]) if self.get_second_lvl("particle_accelerator")[0] else 0
+
     def get_lvl_3_active_upgrades(self):
         temp = []
         for kind in self.active_upgrades[2]:
@@ -76,7 +86,7 @@ class RunManager:
             if temp_up[0] and (temp_up[1] != temp_up[2]):
                 temp.append(kind)
         if not temp:
-            temp = None
+            temp = []
         return temp
 
     def chance_mult(self):

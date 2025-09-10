@@ -65,14 +65,12 @@ class PierceProj(Projectile):
 
         # Left or right walls
         if cur_run_data.get_random_chance(self.bounce_chance):
-            print(vel)
             if x < radius or x > clamp_size[0] - radius:
                 self.direction = 180 - self.direction
 
             # Vertical walls (top/bottom)
             if y < radius or y > clamp_size[1] - radius:
                 self.direction = -self.direction
-            print(vel)
 
             if bounced:
                 self.damaged_entities = set()

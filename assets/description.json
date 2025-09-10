@@ -37,6 +37,14 @@
         "bounce": {
             "title": "bounce",
             "description": "Your bullets have @1% chance to\nbounce off walls\n*@2% damage*"
+        },
+        "blitz": {
+            "title": "blitz",
+            "description": "Increases damage by @1 per each\nwhole firerate you have\n*Bypasses damage multiplier*\n*@2% damage*"
+        },
+        "particle_accelerator": {
+            "title": "Particle Accelerator",
+            "description": "Increases your firerate by @1 per\neach bullet speed you have\n*Bypasses firerate multiplier*\n*@2% bullet speed*"
         }
     },
     "3": {

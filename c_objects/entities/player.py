@@ -90,9 +90,18 @@ class Player(Entity):
         loc_firerate = round(loc_firerate * self.multipliers["firerate"],2)
         loc_dmg = round(self.attack_damage * self.multipliers["damage"],1)
         loc_b_spd = round(self.b_speed * self.multipliers["bullet_speed"],1)
-        self.hud_firerate = loc_firerate
+
+        loc_firerate += cur_run_data.get_PA_additional_fr(loc_b_spd)
+        loc_dmg += cur_run_data.get_blitz_additional_dmg(loc_firerate)
+        loc_b_spd += 0
+
+        loc_firerate =round(loc_firerate,2)
+        loc_dmg = round(loc_dmg,1)
+        loc_b_spd = round(loc_b_spd,1)
+
+        self.hud_firerate = round(loc_firerate,2)
         self.hud_dmg = round(loc_dmg)
-        self.hud_b_spd = loc_b_spd
+        self.hud_b_spd = round(loc_b_spd)
 
         direction = pygame.Vector2(0, 0)
 
