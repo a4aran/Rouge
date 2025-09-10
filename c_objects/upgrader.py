@@ -21,7 +21,9 @@ class Upgrader:
         self.sprites = [
             go.get_custom_object("heart_up"),
             go.get_custom_object("level_1_up"),
-            go.get_custom_object("level_2_up")
+            go.get_custom_object("level_2_up"),
+            go.get_custom_object("level_3_up"),
+            go.get_custom_object("level_4_up")
         ]
         self.upgrades = []
         self.picked = None
@@ -69,19 +71,45 @@ class Upgrader:
 
         def roll_upgrade_kind(self, exclude, add_heal: bool):
             if self.level == 1:
-                choices = gl_var.level_1_upgrade_list.copy()
-                if add_heal and exclude != "heal": choices.append("heal")
-                if exclude is not None:
-                    # handle list or single string
-                    if isinstance(exclude, list):
-                        for ex in exclude:
-                            if ex != "heal" and ex in choices:
-                                choices.remove(ex)
-                    elif exclude != "heal" and exclude in choices:
-                        choices.remove(exclude)
-                return random.choice(choices)
+                temp_lvl_4 = cur_run_data.get_lvl_3_active_upgrades()
+                if temp_lvl_4 is not None:
+                    temp_lvl_4 = [k for k in temp_lvl_4 if k not in exclude]
+                if temp_lvl_4 is not None and temp_lvl_4:
+                    self.level = 4 if random.random() > 0.6 else 1
+                if self.level == 1:
+                    choices = gl_var.level_1_upgrade_list.copy()
+                    if add_heal and exclude != "heal": choices.append("heal")
+                    if exclude is not None:
+                        # handle list or single string
+                        if isinstance(exclude, list):
+                            for ex in exclude:
+                                if ex != "heal" and ex in choices:
+                                    choices.remove(ex)
+                        elif exclude != "heal" and exclude in choices:
+                            choices.remove(exclude)
+                    return random.choice(choices)
+                else:
+                    choices = cur_run_data.get_lvl_3_active_upgrades()
+                    if exclude:
+                        if isinstance(exclude, list):
+                            for ex in exclude:
+                                if ex in choices:
+                                    choices.remove(ex)
+                        elif exclude in choices:
+                            choices.remove(exclude)
+                    return random.choice(choices) + "_up"
             elif self.level == 2:
                 choices = gl_var.level_2_upgrade_list.copy()
+                if exclude:
+                    if isinstance(exclude, list):
+                        for ex in exclude:
+                            if ex in choices:
+                                choices.remove(ex)
+                    elif exclude in choices:
+                        choices.remove(exclude)
+                return random.choice(choices)
+            elif self.level == 3:
+                choices = gl_var.level_3_upgrade_list.copy()
                 if exclude:
                     if isinstance(exclude, list):
                         for ex in exclude:
@@ -116,6 +144,15 @@ class Upgrader:
                     temp.append(round(cur_run_data.active_upgrades[1]["bounce"][3] * 100))
                 elif self.kind == "double_trouble":
                     temp.append("")
+            if self.level == 3:
+                if self.kind == "shoot_on_death":
+                    temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][1])
+                    temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][2])
+            if self.level == 4:
+                if self.kind == "shoot_on_death_up":
+                    temp.append(cur_run_data.active_upgrades[3]["shoot_on_death_up"])
+                    temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][1])
+                    temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][2])
             return temp
 
 
@@ -148,6 +185,16 @@ class Upgrader:
                 cur_run_data.round_active_upgrades()
                 cur_run_data.request_player_upgrade = True
                 self.should_end = True
+            elif self.picked.level == 3:
+                cur_run_data.active_upgrades[self.picked.level - 1][self.picked.kind][0] = True
+                cur_run_data.round_active_upgrades()
+                cur_run_data.request_player_upgrade = True
+                self.should_end = True
+            if self.picked.level == 4:
+                cur_run_data.active_upgrades[self.picked.level - 2][self.picked.kind.removesuffix("_up")][1] += cur_run_data.active_upgrades[3]["shoot_on_death_up"]
+                cur_run_data.round_active_upgrades()
+                cur_run_data.request_player_upgrade = True
+                self.should_end = True
         self.ui.update(fd)
 
     def draw(self,surface: pygame.Surface):
@@ -176,33 +223,72 @@ class Upgrader:
 
     def populate_upgrades(self,level,wave,player_hp,player_max_hp):
         true_amount = []
-        up_to_choose = 2
-        if level == 2:
-            for kind in cur_run_data.active_upgrades[1]:
-                if cur_run_data.active_upgrades[1][kind][0]: true_amount.append(kind)
-            if len(true_amount) == len(cur_run_data.active_upgrades[1]): level = 1
-            if not (abs(len(cur_run_data.active_upgrades[1]) - len(true_amount)) > 1):
-                up_to_choose = 1
+        level, up_to_choose = self.check_levels(level,true_amount)
 
         r = random.randint(100,140)
         r /= 100
         ah = player_hp < (player_max_hp * r)/2
         self.upgrades = []
         self.upgrades.append(self._Upgrade(level,self.up_poses[0],wave,ah,true_amount))
-        temp = self.compiler.get_compiled_text(level,self.upgrades[0].kind,self.upgrades[0].stats)
+        temp = self.compiler.get_compiled_text(self.upgrades[0].level,self.upgrades[0].kind,self.upgrades[0].stats)
+        self.ui.get_text_display("up_1_title").set_size(45 if len(temp[0][0]) < 15 else 35)
         self.ui.get_text_display("up_1_title").set_text(temp[0])
         self.ui.get_text_display("up_1_text").set_text(temp[1])
 
-        exc = true_amount
+        exc = true_amount.copy()
         exc.append(self.upgrades[0].kind)
 
         if up_to_choose == 1:
             level = 1
             exc = None
         self.upgrades.append(self._Upgrade(level,self.up_poses[1],wave,ah,exc))
-        temp = self.compiler.get_compiled_text(level,self.upgrades[1].kind,self.upgrades[1].stats)
+        temp = self.compiler.get_compiled_text(self.upgrades[1].level,self.upgrades[1].kind,self.upgrades[1].stats)
+        self.ui.get_text_display("up_2_title").set_size(45 if len(temp[0][0]) < 15 else 35)
         self.ui.get_text_display("up_2_title").set_text(temp[0])
         self.ui.get_text_display("up_2_text").set_text(temp[1])
+
+        print(cur_run_data.active_upgrades)
+
+    def check_level_2(self,level,true_amount: list):
+        up_to_choose = 2
+        for kind in cur_run_data.active_upgrades[1]:
+            if cur_run_data.active_upgrades[1][kind][0]: true_amount.append(kind)
+        if len(true_amount) == len(cur_run_data.active_upgrades[1]): level = 1
+        if not (abs(len(cur_run_data.active_upgrades[1]) - len(true_amount)) > 1):
+            up_to_choose = 1
+        return level,up_to_choose
+
+    def check_level_3(self,level,true_amount: list):
+        up_to_choose = 2
+        level = level
+        for kind in cur_run_data.active_upgrades[2]:
+            if cur_run_data.active_upgrades[2][kind][0]: true_amount.append(kind)
+        if len(true_amount) == len(cur_run_data.active_upgrades[2]): level = 2
+        if not (abs(len(cur_run_data.active_upgrades[2]) - len(true_amount)) > 1):
+            up_to_choose = 1
+        return level,up_to_choose
+
+    def check_levels(self,level,true_amount):
+        temp_list = []
+        up_to_choose = 2
+        level = level
+        if level == 2: level,up_to_choose = self.check_level_2(level,temp_list)
+        elif level == 3:
+            level, up_to_choose = self.check_level_3(level, temp_list)
+            if level == 2:
+                temp_list.clear()
+                level, up_to_choose = self.check_level_2(level, temp_list)
+        true_amount = temp_list.copy()
+        return level,up_to_choose
+
+    def construct_available_upgrades_list(self,add_heal:bool):
+        level_1 = gl_var.level_1_upgrade_list.copy()
+        if add_heal: level_1.append("heal")
+        level_2 = []
+        for kind in cur_run_data.active_upgrades[1]:
+            if cur_run_data.get_second_lvl(kind): level_2.append(kind)
+        level_3 = cur_run_data.get_lvl_3_active_upgrades()
+        return level_1,level_2,level_3
 
     def cooldown_on(self):
         self.pop_up_cooldown[2] = True

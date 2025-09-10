@@ -9,7 +9,7 @@
             "description": "Increases bullet pierce by @1"
         },
         "bullet_speed": {
-            "title": "B-Speed Upgrade",
+            "title": "Bullet Speed Upgrade",
             "description": "Adds @1 to bullet's speed"
         },
         "firerate": {
@@ -37,6 +37,18 @@
         "bounce": {
             "title": "bounce",
             "description": "Your bullets have @1% chance to\nbounce off walls\n*@2% damage*"
+        }
+    },
+    "3": {
+        "shoot_on_death": {
+            "title": "Last Stand Of Good",
+            "description": "When enemies die, they shoot @1 bullet\nin driection of a random enemy\n*Caps out at @2 bullets*"
+        }
+    },
+    "4": {
+        "shoot_on_death_up": {
+            "title": "Last Stand Upgrade",
+            "description": "Increases amount of bullets shot from\nenemies on thier death by @1\n*Current amount @2*\n*Caps out at @3*"
         }
     }
 }

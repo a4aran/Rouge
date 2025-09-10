@@ -10,7 +10,7 @@ if TYPE_CHECKING:
     from c_objects.world import World
 
 class Projectile(Entity):
-    def __init__(self, pos: pygame.Vector2,radius:float,direction: float,speed:float,damage: float):
+    def __init__(self, pos: pygame.Vector2,radius:float,direction: float,speed:float,damage: float,on_death:dict):
         super().__init__(pos, radius)
         self.speed = speed
         self.direction = direction
@@ -18,6 +18,7 @@ class Projectile(Entity):
         self.damage = damage
         self.color = (255,0,0)
         self.effects = []
+        self.on_death = on_death
 
     def update(self,world: "World",frame_data: FrameData):
         vel = pygame.Vector2(1,0).rotate(self.direction).normalize()
@@ -32,15 +33,15 @@ class Projectile(Entity):
                 y < 0 + radius or y > clamp_size[1] - radius):
             self.should_delete = True
 
-    def damage_entity(self, entity: Entity):
+    def damage_entity(self, entity: Entity,world: "World"):
         from c_objects.entities.enemies import Enemy
         if isinstance(entity,Enemy):
-            entity.damage(self.damage,self.effects)
+            entity.damage(world,self.damage,self.on_death,self.effects)
         self.damaged_entities.add(entity.id)
 
 class PierceProj(Projectile):
-    def __init__(self, pos: pygame.Vector2, direction: float,dmg: float,spd: float,pierce: int,bounce_chance: float):
-        super().__init__(pos, 6, direction, spd,dmg)
+    def __init__(self, pos: pygame.Vector2, direction: float,dmg: float,spd: float,pierce: int,bounce_chance: float,on_death: dict):
+        super().__init__(pos, 6, direction, spd,dmg,on_death)
         self.pierce = pierce
         self.bounce_chance = bounce_chance
 
@@ -48,8 +49,8 @@ class PierceProj(Projectile):
         super().update(world,frame_data)
         if self.pierce < 1: self.should_delete = True
 
-    def damage_entity(self, entity: Entity):
-        super().damage_entity(entity)
+    def damage_entity(self, entity: Entity,world: "World"):
+        super().damage_entity(entity,world)
         if hasattr(entity,"no_pierce") and entity.no_pierce:
             self.pierce = 0
         else:
@@ -85,19 +86,25 @@ class PierceProj(Projectile):
                     y < 0 + radius or y > clamp_size[1] - radius):
                 self.should_delete = True
 
+class AllyProjectile(PierceProj):
+    def __init__(self, pos: pygame.Vector2, direction: float,shooter_id):
+        super().__init__(pos, direction, 8, 150, 1, 0, None)
+        self.damaged_entities.add(shooter_id)
+        self.color = (255,255,0)
+
 class FreezePP(PierceProj):
-    def __init__(self, pos: pygame.Vector2, direction: float,dmg: float,spd: float,pierce: int,bounce_chance: float):
-       super().__init__(pos,direction,dmg,spd,pierce,bounce_chance)
+    def __init__(self, pos: pygame.Vector2, direction: float,dmg: float,spd: float,pierce: int,bounce_chance: float,on_death: dict):
+       super().__init__(pos,direction,dmg,spd,pierce,bounce_chance,on_death)
        self.effects = [["freeze", 0.5]]
        self.color = (0,255,255)
 
 class EnemyProj(Projectile):
     def __init__(self, pos: pygame.Vector2, direction: float, speed: float, damage: float):
-        super().__init__(pos, 4, direction, speed, damage)
+        super().__init__(pos, 4, direction, speed, damage,None)
         self.color = (0,0,0)
         self.outline_color = (255,0,0)
 
-    def damage_entity(self, entity: Entity):
+    def damage_entity(self, entity: Entity,world: "World"):
         if getattr(entity,"id",None) == "Player":
             entity.damage(self,self.damage)
         self.should_delete = True

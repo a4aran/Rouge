@@ -13,7 +13,7 @@ import ar_math_helper as ar_math
 
 class CrowdMaster(Enemy):
     def __init__(self, w_size,hp_mult):
-        super().__init__(pygame.Vector2(w_size[0]/2,0), 120, 1250 * hp_mult, 0)
+        super().__init__(pygame.Vector2(w_size[0]/2,0), 120, 1000 * hp_mult, 0)
         self.w_size = w_size
         self.no_pierce = True
         self.minion_spawn_cooldown = [2,2.5]
@@ -49,17 +49,20 @@ class CrowdMaster(Enemy):
         self.minion_spawn_cooldown[0] += frame_data.dt
         if self.minion_spawn_cooldown[0] >= self.minion_spawn_cooldown[1]:
             self.minion_spawn_cooldown[0] = 0
-            self.spawn_minions(world)
+            if len(world.entities) < 15:
+                self.spawn_minions(world,4)
+            else:
+                self.spawn_minions(world,1)
 
-    def spawn_minions(self,world: "World"):
-        for i in range(4):
+    def spawn_minions(self,world: "World",amount):
+        for i in range(amount):
             random_dir = random.randint(30,150)
             random_distance = random.randint(40,100)
             loc_pos = self.hitbox.pos + pygame.Vector2(self.hitbox.radius,0).rotate(random_dir)
             world.entities.append(SpawnProjectile(loc_pos,random_dir,random_distance))
 
     def shoot(self,world):
-        ang = random.randint(30, 150) if random.random() > 0.4 else self.ang_to_p
+        ang = random.randint(30, 150) if random.random() > 0.2 else self.ang_to_p
         pos = self.hitbox.pos + pygame.Vector2(self.hitbox.radius, 0).rotate(ang)
         world.enemy_projectiles.append(EnemyProj(pos,ang,100,4))
         self.shooting[2] += 1
@@ -83,12 +86,12 @@ class SpawnProjectile(Entity):
             world.spawn_enemy(self.hitbox.pos,"faster" if random.random() < 0.33 else "simple")
         self.hitbox.pos += vel
 
-    # def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
-    #     double_radius = self.hitbox.radius * 2
-    #     temp = pygame.Surface((double_radius,double_radius),pygame.SRCALPHA)
-    #     pygame.draw.polygon(temp,self.color,((self.hitbox.radius,0),(0,double_radius),(double_radius,double_radius)))
-    #     pygame.draw.polygon(temp,self.outline_color,((self.hitbox.radius,0),(0,double_radius),(double_radius,double_radius)),2)
-    #     temp = pygame.transform.rotate(temp,self.angle)
-    #     surf.blit(temp,(offset.x + self.hitbox.pos.x - temp.get_width()/2,offset.y + self.hitbox.pos.y - temp.get_height()/2))
+    def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
+        double_radius = self.hitbox.radius * 2
+        temp = pygame.Surface((double_radius,double_radius),pygame.SRCALPHA)
+        pygame.draw.polygon(temp,self.color,((self.hitbox.radius,0),(0,double_radius),(double_radius,double_radius)))
+        pygame.draw.polygon(temp,self.outline_color,((self.hitbox.radius,0),(0,double_radius),(double_radius,double_radius)),2)
+        temp = pygame.transform.rotate(temp,self.angle)
+        surf.blit(temp,(offset.x + self.hitbox.pos.x - temp.get_width()/2,offset.y + self.hitbox.pos.y - temp.get_height()/2))
 
 boss_list = [CrowdMaster]

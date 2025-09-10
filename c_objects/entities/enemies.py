@@ -9,6 +9,7 @@ import gl_var
 from Illusion.frame_data_f import FrameData
 from c_objects.entities import projectiles
 from c_objects.entities.entity import Entity
+from current_game_run_data import cur_run_data
 
 
 class Enemy(Entity):
@@ -21,16 +22,40 @@ class Enemy(Entity):
         self.atk_dmg = dmg
         self.a_atk_dmg = dmg
 
-    def damage(self,amount: float,effects: list = False):
+    def damage(self,world: "World",amount: float,death_info: dict,effects: list = False):
         self.health -= amount
         if self.health <= 0:
-            self.should_delete = True
+            self.on_death(death_info,world)
             return
         if effects:
             for ef in effects:
                 if ef[0] == "freeze":
                     self.apply_freeze(ef[1])
         self.trigger_flash()
+
+    def on_death(self, death_info: dict, world: "World"):
+        if death_info is not None:
+            if death_info.get("shoot", False) and world.entities:
+                # valid targets (exclude self)
+                valid_targets = [e for e in world.entities if e.id != self.id]
+
+                if valid_targets:
+                    shots = cur_run_data.active_upgrades[2]["shoot_on_death"][1]
+
+                    # pick unique targets if possible, otherwise allow repeats
+                    if shots <= len(valid_targets):
+                        chosen_targets = random.sample(valid_targets, shots)
+                    else:
+                        chosen_targets = [random.choice(valid_targets) for _ in range(shots)]
+
+                    for target in chosen_targets:
+                        direction = ar_math_helper.angle_to_target(self.hitbox.pos, target.hitbox.pos)
+                        world.projectiles.append(
+                            projectiles.AllyProjectile(self.hitbox.pos.copy(), direction, self.id)
+                        )
+
+        self.should_delete = True
+
 
     def apply_freeze(self,time: float):
         self.status_effects["time"]["freeze"][0] = 0
@@ -132,8 +157,8 @@ class SimpleAIEnemy(Enemy):
         #     pygame.draw.line(surf,(255,0,0),self.hitbox.pos+offset,vec,4)
 
 class FasterSAiEnemy(SimpleAIEnemy):
-    def __init__(self, pos: pygame.Vector2,health = 50,spd=30,speed_mult = 1.2):
-        super().__init__(pos,health=health,spd=spd,cooldown=0.5,length_range=(130,250))
+    def __init__(self, pos: pygame.Vector2,health = 50,spd=30,speed_mult = 1.1):
+        super().__init__(pos,health=health,spd=spd,cooldown=0.8,length_range=(130,250))
         self.add_speed = self.speed
         self.spd_mult = speed_mult
         self.color = (255,150,0)

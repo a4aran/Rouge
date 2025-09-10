@@ -15,6 +15,12 @@ class RunManager:
                 "triple_shot": [False, 0.10, "firerate", -0.1],
                 "double_trouble": [False, -10],
                 "bounce": [False, 0.2, "damage", -0.1]
+            },
+            {
+                "shoot_on_death": [False,1,4]
+            },
+            {
+                "shoot_on_death_up": 1
             }
         ]
 
@@ -43,6 +49,12 @@ class RunManager:
                 "double_trouble": [False, -10],
                 "bounce": [False,0.2,"damage",-0.1]
             }
+        self.active_upgrades[2]={
+                "shoot_on_death": [False, 1, 4]
+            }
+        self.active_upgrades[3] = {
+            "shoot_on_death_up": 1
+        }
 
         self.heal_q = 0
         self.last_max_health_upgrade_wave = 0
@@ -56,6 +68,16 @@ class RunManager:
         if self.get_second_lvl("double_trouble")[0]:
             chance *= 2
         return random.random() <= chance
+
+    def get_lvl_3_active_upgrades(self):
+        temp = []
+        for kind in self.active_upgrades[2]:
+            temp_up = self.active_upgrades[2][kind]
+            if temp_up[0] and (temp_up[1] != temp_up[2]):
+                temp.append(kind)
+        if not temp:
+            temp = None
+        return temp
 
     def chance_mult(self):
         m = 1

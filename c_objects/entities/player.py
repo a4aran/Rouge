@@ -47,6 +47,8 @@ class Player(Entity):
             "bullet_speed": 1
         }
 
+        self.on_death = {"shoot": False}
+
     def update(self,world: "World",frame_data: FrameData):
         self.multipliers = {
             "firerate": 1,
@@ -65,6 +67,8 @@ class Player(Entity):
                     self.multipliers[cur_run_data.active_upgrades[1][lvl_2][2]] += cur_run_data.active_upgrades[1][lvl_2][3]
         for kind in self.multipliers:
             self.multipliers[kind] = max(0.2,self.multipliers[kind])
+
+        self.on_death["shoot"] = cur_run_data.active_upgrades[2]["shoot_on_death"][0]
 
         if cur_run_data.heal_q != 0:
             self.health += cur_run_data.heal_q
@@ -160,12 +164,42 @@ class Player(Entity):
             world.projectiles.append(PierceProj(
                 pygame.Vector2(self.hitbox.radius, 0)
                 .rotate(angle) + self.hitbox.pos, angle, dmg,
-                b_spd, self.pierce,bc))
+                b_spd, self.pierce,bc,self.on_death))
         elif type == "freeze":
             world.projectiles.append(FreezePP(
                 pygame.Vector2(self.hitbox.radius, 0)
                 .rotate(angle) + self.hitbox.pos, angle, dmg,
-                b_spd, self.pierce,bc))
+                b_spd, self.pierce,bc,self.on_death))
+
+    def shoot_custom(self,world: "World",type: str,angle,pos: pygame.Vector2):
+        dmg, b_spd = self.bullet_stats_provider()
+        bc = 0
+        if cur_run_data.active_upgrades[1]["bounce"][0]:
+            bc = cur_run_data.active_upgrades[1]["bounce"][1]
+        if type == "normal":
+            world.projectiles.append(PierceProj(
+                pos, angle, dmg,
+                b_spd, self.pierce,bc,self.on_death))
+        elif type == "freeze":
+            world.projectiles.append(FreezePP(
+                pos, angle, dmg,
+                b_spd, self.pierce,bc,self.on_death))
+
+    def bullet_stats_provider(self):
+        self.multipliers = {
+            "firerate": 1,
+            "damage": 1,
+            "bullet_speed": 1
+        }
+        for lvl_2 in cur_run_data.active_upgrades[1]:
+            if lvl_2 != "double_trouble":
+                if cur_run_data.active_upgrades[1][lvl_2][0]:
+                    self.multipliers[cur_run_data.active_upgrades[1][lvl_2][2]] += cur_run_data.active_upgrades[1][lvl_2][3]
+        for kind in self.multipliers:
+            self.multipliers[kind] = max(0.2,self.multipliers[kind])
+        loc_dmg = round(self.attack_damage * self.multipliers["damage"],1)
+        loc_b_spd = round(self.b_speed * self.multipliers["bullet_speed"],1)
+        return loc_dmg,loc_b_spd
 
     def update_shooting_cooldown(self,fire_rate):
         self.cooldown[1] = self.base_fire_cooldown / fire_rate
