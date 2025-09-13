@@ -89,9 +89,9 @@ class SpawnProjectile(Entity):
     def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
         double_radius = self.hitbox.radius * 2
         temp = pygame.Surface((double_radius,double_radius),pygame.SRCALPHA)
-        pygame.draw.polygon(temp,self.color,((self.hitbox.radius,0),(0,double_radius),(double_radius,double_radius)))
-        pygame.draw.polygon(temp,self.outline_color,((self.hitbox.radius,0),(0,double_radius),(double_radius,double_radius)),2)
-        temp = pygame.transform.rotate(temp,self.angle)
+        temp.fill((255,255,255))
+        pygame.draw.rect(temp,(0,0,0),(0,0,double_radius,double_radius),2)
+        temp = pygame.transform.rotate(temp,-self.angle)
         surf.blit(temp,(offset.x + self.hitbox.pos.x - temp.get_width()/2,offset.y + self.hitbox.pos.y - temp.get_height()/2))
 
 boss_list = [CrowdMaster]

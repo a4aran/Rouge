@@ -20,6 +20,7 @@ class World:
 
         self.player = Player()
         self.entities = []
+        self.deleted_entities_amount = 0
         self.projectiles = []
         self.enemy_projectiles = []
         self.boss = []
@@ -70,6 +71,7 @@ class World:
                             p.damage_entity(b,self)
 
             self.projectiles = [p for p in self.projectiles if not p.should_delete]
+            self.deleted_entities_amount = sum(i.should_delete for i in self.entities)
             self.entities = [e for e in self.entities if not e.should_delete]
             self.enemy_projectiles = [ep for ep in self.enemy_projectiles if not ep.should_delete]
             self.boss = [b for b in self.boss if not b.should_delete]
@@ -100,6 +102,7 @@ class World:
                         self.vfx_to_show = None
 
     def start_wave(self):
+        current_game_run_data.save_manager.update()
         self.wave_count += 1
         self.is_boss_wave = self.wave_count % 10 == 0
 
@@ -172,8 +175,16 @@ class World:
             scaling *= 1 + (self.wave_count - 5) / 65
         elif 20 < self.wave_count < 30:
             scaling *= 1 + (self.wave_count-5) / 35
-        elif self.wave_count > 30:
+        elif 40 > self.wave_count > 30:
             scaling *= 1 + (self.wave_count-5) / 25
+        elif  50 > self.wave_count > 40:
+            scaling *= 1 + (self.wave_count-5) / 15
+        elif 75 > self.wave_count > 50:
+            scaling *= self.wave_count / 5
+        elif 100 > self.wave_count > 75:
+            scaling *= self.wave_count / 2
+        elif self.wave_count > 100:
+            scaling *= self.wave_count * 1.2
         if type == "simple": return scaling,scaling*0.9
         if type == "faster": return scaling*0.7,scaling*1.05
         if type == "double": return scaling*2,scaling*0.65
@@ -204,7 +215,8 @@ class World:
         self.vfx_to_show = None
         self.upgrade = [False, 0]
 
-        current_game_run_data.cur_run_data.reset()
+        print(current_game_run_data.save_manager.upgrade_file_save_decoded)
+        current_game_run_data.cur_run_data.load_save(current_game_run_data.save_manager.upgrade_file_save_decoded)
         self.player.reset()
 
     def wave_end(self):

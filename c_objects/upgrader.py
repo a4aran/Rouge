@@ -111,11 +111,19 @@ class Upgrader:
                 if self.kind == "shoot_on_death":
                     temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][1])
                     temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][2])
+                elif self.kind == "lifesteal":
+                    temp.append(round(cur_run_data.active_upgrades[2]["lifesteal"][1] * 100 * cur_run_data.chance_mult()))
+                    temp.append(cur_run_data.lifesteal_amount)
+                    temp.append(round(cur_run_data.active_upgrades[2]["lifesteal"][2] * 100 * cur_run_data.chance_mult()))
             if self.level == 4:
                 if self.kind == "shoot_on_death_up":
                     temp.append(cur_run_data.active_upgrades[3]["shoot_on_death_up"])
                     temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][1])
                     temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][2])
+                elif self.kind == "lifesteal_up":
+                    temp.append(cur_run_data.active_upgrades[3]["lifesteal_up"])
+                    temp.append(cur_run_data.active_upgrades[2]["lifesteal"][1])
+                    temp.append(cur_run_data.active_upgrades[2]["lifesteal"][2])
             return temp
 
 
@@ -154,7 +162,7 @@ class Upgrader:
                 cur_run_data.request_player_upgrade = True
                 self.should_end = True
             if self.picked.level == 4:
-                cur_run_data.active_upgrades[self.picked.level - 2][self.picked.kind.removesuffix("_up")][1] += cur_run_data.active_upgrades[3]["shoot_on_death_up"]
+                cur_run_data.active_upgrades[self.picked.level - 2][self.picked.kind.removesuffix("_up")][1] += cur_run_data.active_upgrades[3][self.picked.kind]
                 cur_run_data.round_active_upgrades()
                 cur_run_data.request_player_upgrade = True
                 self.should_end = True

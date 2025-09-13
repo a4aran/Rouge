@@ -71,9 +71,9 @@ class FormulaProvider:
 
     @staticmethod
     def b_speed_upgrade(wave):
-        temp = min(max(20,round(2*wave*0.6 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave))),50)
+        temp = min(max(20,round(2.2*wave*0.6 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave))),50)
         if wave > 20:
-            temp = min(max(30,round(1.7*wave*0.6 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave))),50)
+            temp = min(max(30,round(1.9*wave*0.6 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave))),50)
         return temp
 
     @staticmethod

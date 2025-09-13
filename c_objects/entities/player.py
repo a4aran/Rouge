@@ -69,10 +69,18 @@ class Player(Entity):
             self.multipliers[kind] = max(0.2,self.multipliers[kind])
 
         self.on_death["shoot"] = cur_run_data.active_upgrades[2]["shoot_on_death"][0]
+        print(world.deleted_entities_amount)
+        if cur_run_data.active_upgrades[2]["lifesteal"][0]:
+            if world.deleted_entities_amount > 0:
+                for i in range(world.deleted_entities_amount):
+                    if cur_run_data.get_random_chance(cur_run_data.active_upgrades[2]["lifesteal"][1]):
+                        cur_run_data.heal_q += 1
 
         if cur_run_data.heal_q != 0:
             self.health += cur_run_data.heal_q
+            self.health = min(self.max_health,self.health)
             cur_run_data.heal_q = 0
+
         self.max_health = 100 + cur_run_data.add_max_hp
 
         loc_speed = self.speed

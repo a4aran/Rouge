@@ -51,12 +51,20 @@
         "shoot_on_death": {
             "title": "Last Stand Of Good",
             "description": "When enemies die, they shoot @1 bullet\nin driection of a random enemy\n*Caps out at @2 bullets*"
+        },
+        "lifesteal": {
+            "title": "Lifesteal",
+            "description": "You have @1% chance to heal @2hp\nwhen killing an enemy\n*Chance caps out at @3%*"
         }
     },
     "4": {
         "shoot_on_death_up": {
             "title": "Last Stand Upgrade",
             "description": "Increases amount of bullets shot from\nenemies on thier death by @1\n*Current amount @2*\n*Caps out at @3*"
+        },
+        "lifesteal_up": {
+            "title": "Lifesteal Upgrade",
+            "description": "Incearses chance to heal when\nkilling enemies by @1%\n*Current chance @2%*\n*Caps out at @3%*"
         }
     }
 }
