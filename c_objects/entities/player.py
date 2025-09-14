@@ -16,18 +16,25 @@ if TYPE_CHECKING:
 class Player(Entity):
     def __init__(self):
         super().__init__(pygame.Vector2(270,270),15)
-        self.speed = 120
         self.base_fire_cooldown = 0.5
-        self.firerate = 1
-        self.cooldown = [0,self.base_fire_cooldown / self.firerate,False]
         self.id = "Player"
-        self.max_health = 100
-        self.health = self.max_health
-        self.super = {
+        self.character = [{
             "name": "dash",
             "cooldown": [0,3,True],
-            "active": [0,0.5,False]
-        }
+            "active": [0,0.5,False],
+            "base_stats":{
+                "speed": 120,
+                "firerate": 1,
+                "max_hp": 100,
+                "attack_dmg": 10,
+                "pierce": 1,
+                "b_speed": 170
+            }
+        }]
+        self.firerate = 1
+        self.cooldown = [0,self.base_fire_cooldown / self.firerate,False]
+        self.max_health = 100
+        self.health = self.max_health
         self.attack_damage = 10
         self.pierce = 1
         self.b_speed = 170
@@ -50,6 +57,7 @@ class Player(Entity):
         self.on_death = {"shoot": False}
 
     def update(self,world: "World",frame_data: FrameData):
+        current_character = self.character[cur_run_data.selected_character]
         self.multipliers = {
             "firerate": 1,
             "damage": 1,
@@ -57,10 +65,11 @@ class Player(Entity):
         }
         if cur_run_data.request_player_upgrade:
             temp = cur_run_data.active_upgrades
-            self.attack_damage = 10 + temp[0]["damage"]
-            self.pierce = 1 + temp[0]["pierce"]
-            self.b_speed = 170 + temp[0]["bullet_speed"]
-            self.firerate = 1 + temp[0]["firerate"]
+            temp2 = current_character["base_stats"]
+            self.attack_damage = temp2["attack_dmg"] + temp[0]["damage"]
+            self.pierce = temp2["pierce"] + temp[0]["pierce"]
+            self.b_speed = temp2["b_speed"] + temp[0]["bullet_speed"]
+            self.firerate = temp2["firerate"] + temp[0]["firerate"]
         for lvl_2 in cur_run_data.active_upgrades[1]:
             if lvl_2 != "double_trouble":
                 if cur_run_data.active_upgrades[1][lvl_2][0]:
@@ -69,22 +78,30 @@ class Player(Entity):
             self.multipliers[kind] = max(0.2,self.multipliers[kind])
 
         self.on_death["shoot"] = cur_run_data.active_upgrades[2]["shoot_on_death"][0]
+        if cur_run_data.active_upgrades[2]["lifesteal"][0]:
+            if world.deleted_entities_amount > 0:
+                for i in range(world.deleted_entities_amount):
+                    if cur_run_data.get_random_chance(cur_run_data.active_upgrades[2]["lifesteal"][1]):
+                        cur_run_data.heal_q += 1
 
         if cur_run_data.heal_q != 0:
             self.health += cur_run_data.heal_q
+            self.health = min(self.max_health,self.health)
             cur_run_data.heal_q = 0
-        self.max_health = 100 + cur_run_data.add_max_hp
 
-        loc_speed = self.speed
+        self.max_health = current_character["base_stats"]["max_hp"] + cur_run_data.add_max_hp
+
+        loc_speed = current_character["base_stats"]["speed"]
         loc_firerate = self.firerate
-        if self.super["active"][2]:
-            loc_speed *= 2
-            loc_firerate += 1.5
-            loc_firerate = round(loc_firerate,2)
-            self.super["active"][0] += frame_data.dt
-            if self.super["active"][0] > self.super["active"][1]:
-                self.super["active"][2] = False
-                self.super["active"][0] = 0
+        if current_character["name"] == "dash":
+            if current_character["active"][2]:
+                loc_speed *= 2
+                loc_firerate += 1.5
+                loc_firerate = round(loc_firerate,2)
+                current_character["active"][0] += frame_data.dt
+                if current_character["active"][0] > current_character["active"][1]:
+                    current_character["active"][2] = False
+                    current_character["active"][0] = 0
         self.update_shooting_cooldown(loc_firerate)
 
         loc_firerate = round(loc_firerate * self.multipliers["firerate"],2)
@@ -153,15 +170,17 @@ class Player(Entity):
                     self.shoot(world, "normal", ang, loc_dmg, loc_b_spd)
             self.cooldown[2] = True
 
-        if not self.super["cooldown"][2]:
-            self.super["cooldown"][0] += frame_data.dt
-            if self.super["cooldown"][0] >= self.super["cooldown"][1]:
-                self.super["cooldown"][0] = 0
-                self.super["cooldown"][2] = True
+        if current_character["name"] == "dash":
+            if not current_character["cooldown"][2]:
+                current_character["cooldown"][0] += frame_data.dt
+                if current_character["cooldown"][0] >= current_character["cooldown"][1]:
+                    current_character["cooldown"][0] = 0
+                    current_character["cooldown"][2] = True
 
-        if self.super["cooldown"][2] and frame_data.mouse_buttons[2] and not self.super["active"][2]:
-            self.super["active"][2] = True
-            self.super["cooldown"][2] = False
+        if current_character["name"] == "dash":
+            if current_character["cooldown"][2] and frame_data.mouse_buttons[2] and not current_character["active"][2]:
+                current_character["active"][2] = True
+                current_character["cooldown"][2] = False
 
         self.clamp_pos(world.w_size)
 
@@ -232,8 +251,5 @@ class Player(Entity):
         self.cooldown[0] = 0
         self.cooldown[2] = False
 
-        self.super = {
-            "name": "dash",
-            "cooldown": [0,3,True],
-            "active": [0,0.5,False]
-        }
+        self.character[0]["cooldown"] = [0,3,True]
+        self.character[0]["active"] = [0,0.5,False]

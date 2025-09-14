@@ -1,3 +1,3 @@
 width = 900
-height = 600
+height = 720
 # change variables to your liking
