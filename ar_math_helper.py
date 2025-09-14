@@ -86,17 +86,40 @@ class FormulaProvider:
         return temp
 
     @staticmethod
+    def boss_hp_mult(wave):
+        return max(1, 1 + wave / 6) if wave > 11 else 1
+
+    @staticmethod
+    def enemy_scaling(wave):
+        scaling = 1
+        if 10 <= wave < 20:
+            scaling *= 1 + (wave - 5) / 65
+        elif 20 <= wave < 30:
+            scaling *= 1 + (wave - 15) / 40
+        elif 40 > wave >= 30:
+            scaling *= 1 + (wave - 10) / 30
+        elif 50 > wave >= 40:
+            scaling *= 1 + (wave - 5) / 20
+        elif 75 > wave >= 50:
+            scaling *= wave / 10
+        elif 100 > wave >= 75:
+            scaling *= wave / 5
+        elif wave >= 100:
+            scaling *= wave
+        return scaling
+
+    @staticmethod
     def _mult_modifier(wave: int) -> float:
-        if wave > 100:
-            return 0.5
+        if wave > 75:
+            return 0.7
         elif wave > 50:
-            return 0.8
+            return 0.9
         elif wave > 40:
-            return 0.95
+            return 1.05
         elif wave > 25:
-            return 1
-        else:
             return 1.2
+        else:
+            return 1.5
 
     @staticmethod
     def random_mult():

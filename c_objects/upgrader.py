@@ -35,7 +35,7 @@ class Upgrader:
 
         self.compiler = DescCompiler()
         self.ui = UI("def")
-        self.up_poses = [(150,50),(150,350)]
+        self.up_poses = [(150,gl_var.window_center[1]-230),(150,gl_var.window_center[1]+30)]
         self.ui.new_text_display("up_1_title",go.get_font("title_font"),(gl_var.window_center[0],0))
         temp = self.ui.get_text_display("up_1_title")
         temp.set_all((0,0,0),45,["example title"])
@@ -193,13 +193,15 @@ class Upgrader:
         self.should_end = False
 
     def populate_upgrades(self,level,wave,player_hp,player_max_hp):
-
         upgrade_list = self.construct_available_upgrades_list(
             player_hp < (player_max_hp * (random.randint(100,140) / 100))/2)
+        print(level)
         if level == 2 and len(upgrade_list[1]) == 0: level = 1
         if level == 3 and len(upgrade_list[2]) == 0:
             level = 2
             if len(upgrade_list[1]) == 0: level = 1
+
+        print(level)
 
         self.upgrades = []
         self.upgrades.append(self._Upgrade(level,self.up_poses[0],wave,upgrade_list))

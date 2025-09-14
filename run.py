@@ -75,7 +75,7 @@ while game_on:
 
     game_o.update_and_draw(frame_data, window)
 
-    if game_o.get_cur_scene() == 2:
+    if game_o.get_cur_scene() == 3:
         if frame_data.hovers or frame_data.mouse_buttons[0]:
             pygame.mouse.set_cursor(custom_gp_cursor[1])
         else:

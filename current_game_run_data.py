@@ -1,6 +1,8 @@
 import ast
 import random
-
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from c_objects.world import World
 
 class RunManager:
     def __init__(self):
@@ -34,7 +36,11 @@ class RunManager:
         self.last_max_health_upgrade_wave = 0
         self.add_max_hp = 0
 
+        self.selected_character = 0
+
         self.request_player_upgrade = False
+
+        self.should_load_save = False
 
     def round_active_upgrades(self):
         level = self.active_upgrades[0]
@@ -71,6 +77,7 @@ class RunManager:
         self.last_max_health_upgrade_wave = 0
         self.add_max_hp = 0
         self.request_player_upgrade = False
+        self.selected_character = 0
 
     def get_second_lvl(self,name: str) -> list:
         return self.active_upgrades[1][name]
@@ -104,24 +111,33 @@ class RunManager:
     
     def load_save(self,save_data):
         if save_data == "":
-            print("a")
             self.reset()
         else:
             self.active_upgrades = ast.literal_eval(save_data)
         self.request_player_upgrade = True
-        print(self.active_upgrades)
 
 cur_run_data = RunManager()
 
 
 class SaveManager:
     def __init__(self):
+        self.version = 2
         self.coder = self._Coder()
         self.upgrade_save_data_decoded_str = str(cur_run_data.active_upgrades)
         self.upgrade_save_data_encoded = self.coder.encode(self.upgrade_save_data_decoded_str)
 
-        self.upgrades_file_save_encoded = self.read_from_file()
-        self.upgrade_file_save_decoded = self.coder.decode(self.upgrades_file_save_encoded)
+        self.upgrade_file_save_encoded = self.read_from_upgrade_file()[0]
+        self.upgrade_file_save_decoded = self.read_from_upgrade_file()[1]
+
+        self.other_save_data_decoded_str = ""
+        self.other_save_data_encoded = ""
+
+        self.other_file_save_encoded = self.read_from_other_file()[0]
+        self.other_file_save_decoded = self.read_from_other_file()[1]
+
+        if self.other_file_save_decoded == "" or self.upgrade_file_save_decoded == "":
+            self.other_file_save_decoded = ""
+            self.upgrade_file_save_decoded = ""
 
     class _Coder:
         def __init__(self):
@@ -138,19 +154,62 @@ class SaveManager:
             return ''.join(self.reverse_dictionary.get(char, char) for char in text)
 
     def save_to_file(self):
+        encoded_version = self.coder.encode(self.stringify_version())
+        to_write = encoded_version + self.upgrade_save_data_encoded
         with open("save/upgrades.txt", "w", encoding="utf-8") as file:
-            file.write(self.upgrade_save_data_encoded)
+            file.write(to_write)
+        to_write = encoded_version + self.other_save_data_encoded
+        with open("save/other.txt", "w", encoding="utf-8") as file:
+            file.write(to_write)
 
-    def read_from_file(self):
+    def read_from_upgrade_file(self):
         with open("save/upgrades.txt", "r", encoding="utf-8") as file:
-            content = file.read()
-        return content
+            content_raw = file.read()
+        content = self.coder.decode(content_raw)
+        content = "" if not content[:5] == self.stringify_version() else content
+        content = content[5:]
+        return content_raw,content
 
-    def update(self):
+    def read_from_other_file(self):
+        with open("save/other.txt", "r", encoding="utf-8") as file:
+            content_raw = file.read()
+        content = self.coder.decode(content_raw)
+        content = "" if not content[:5] == self.stringify_version() else content
+        content = content[5:]
+        return content_raw,content
+
+    def create_other_save_dict(self,world: "World"):
+        return {
+            "player_health": world.player.health,
+            "player_max_hp": world.player.max_health,
+            "heal_q": cur_run_data.heal_q,
+            "last_max_health_upgrade_wave": cur_run_data.last_max_health_upgrade_wave,
+            "add_max_hp": cur_run_data.add_max_hp,
+            "wave": world.wave_count,
+            "selected_character": cur_run_data.selected_character
+        }
+
+    def stringify_version(self):
+        return f"{self.version:04}v"
+
+    def update(self,world: "World"):
+        self.other_save_data_decoded_str = str(self.create_other_save_dict(world))
+        self.other_save_data_encoded = self.coder.encode(self.other_save_data_decoded_str)
+
         self.upgrade_save_data_decoded_str = str(cur_run_data.active_upgrades)
         self.upgrade_save_data_encoded = self.coder.encode(self.upgrade_save_data_decoded_str)
-        print(self.upgrade_save_data_decoded_str)
         self.save_to_file()
+
+    def reset(self):
+        with open("save/upgrades.txt", "w", encoding="utf-8") as file:
+            file.write("")
+        with open("save/other.txt", "w", encoding="utf-8") as file:
+            file.write("")
+        self.upgrade_file_save_encoded = self.read_from_upgrade_file()[0]
+        self.upgrade_file_save_decoded = self.read_from_upgrade_file()[1]
+        self.other_file_save_encoded = self.read_from_other_file()[0]
+        self.other_file_save_decoded = self.read_from_other_file()[1]
 
 
 save_manager = SaveManager()
+print(save_manager.coder.encode("0002v{'player_health': 100, 'player_max_hp': 100, 'heal_q': 0, 'last_max_health_upgrade_wave': 0, 'add_max_hp': 0, 'wave': 14, 'selected_character': 0}"))

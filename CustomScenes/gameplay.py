@@ -4,6 +4,7 @@ import pygame
 from pygame import SRCALPHA
 
 import c_objects.world
+import current_game_run_data
 import gl_var
 import window_size
 from Illusion.frame_data_f import FrameData
@@ -31,12 +32,12 @@ class GamePlaySC(Scene):
 
         self.create_ui("hud")
         temp = self.get_ui("hud")
-        hp_pos = (75,100)
-        fr_pos = (75,300)
-        super_diam_pos = (75,500)
-        dmg_pos = (window_size.width-75,300)
-        pi_pos = (window_size.width - 75, 100)
-        spd_pos = (window_size.width-75,500)
+        hp_pos = (75,gl_var.window_center[1] - 200)
+        fr_pos = (75,gl_var.window_center[1])
+        super_diam_pos = (75,gl_var.window_center[1] + 200)
+        pi_pos = (window_size.width - 75, gl_var.window_center[1] - 200)
+        dmg_pos = (window_size.width-75,gl_var.window_center[1])
+        spd_pos = (window_size.width-75,gl_var.window_center[1] + 200)
         temp.new_img("hp_bg",importer.get_animated_sprite("health_indicator_hud")[0],hp_pos)
         temp.new_img("hp_indicator",importer.get_animated_sprite("health_indicator_hud")[1],hp_pos)
         temp.new_text_display("hp_amount",global_objects.get_font("text_font"),hp_pos)
@@ -64,6 +65,14 @@ class GamePlaySC(Scene):
         temp.new_img("speed_bullet",importer.get_sprite("speed_hud"),spd_pos)
         temp.new_text_display("speed_amount",global_objects.get_font("text_font"),(spd_pos[0]+7,spd_pos[1]+4))
         temp.get_text_display("speed_amount").set_all((255,255,255),35,"")
+
+        self.create_ui("final_hud")
+        final_hud = self.get_ui("final_hud")
+        final_hud.new_text_display("wave_count",global_objects.get_font("title_font"),gl_var.window_center)
+        text_tmp = final_hud.get_text_display("wave_count")
+        text_tmp.set_all((255,255,255),40,"")
+        text_tmp.toggle_constant_y_pos()
+        text_tmp.set_constant_y_pos(20)
 
         self.create_ui("boss_animation")
         ba_ui = self.get_ui("boss_animation")
@@ -131,6 +140,7 @@ class GamePlaySC(Scene):
 
         self.upgrader = Upgrader(global_objects)
 
+
     def _update(self, frame_data: FrameData):
         temp = self._objs[0]
         if isinstance(temp,World):
@@ -154,17 +164,17 @@ class GamePlaySC(Scene):
         if self.current_state == self.State.PLAYING:
             if isinstance(temp,World):
                 if temp.player.health <= 0:
-                    self.edit_change_scene_data(True,3)
+                    self.edit_change_scene_data(True,4)
                 if temp.should_show_vfx:
                     self.vfx_to_show[0] = True
                     self.vfx_to_show[1] = temp.vfx_to_show
                 else:
                     self.vfx_to_show = [False, None]
                 self.data["wave"] = temp.wave_count
-            if temp.player.super["cooldown"][2]:
+            if temp.player.character[current_game_run_data.cur_run_data.selected_character]["cooldown"][2]:
                 self.super_percent = 1
             else:
-                self.super_percent = temp.player.super["cooldown"][0] / temp.player.super["cooldown"][1]
+                self.super_percent = temp.player.character[current_game_run_data.cur_run_data.selected_character]["cooldown"][0] / temp.player.character[current_game_run_data.cur_run_data.selected_character]["cooldown"][1]
 
             if self.super_percent == 1:
                 self.super_diamond = self.super_diamond_sprites[1]
@@ -205,6 +215,10 @@ class GamePlaySC(Scene):
                 temp_txt = temp_ui.get_text_display("wave_info")
                 if not temp_txt.get_text() == [f'Wave {temp.wave_count}']:
                     temp_txt.set_text([f'Wave {temp.wave_count}'])
+
+            temp_txt = self.get_ui("final_hud").get_text_display("wave_count")
+            if not temp_txt.get_text() == [f'Wave {temp.wave_count}']:
+                temp_txt.set_text([f'Wave {temp.wave_count}'])
 
             temp_b_img = self.hp_indicator.copy()
             temp_b_img.set_alpha(255 * self.hp_percent)

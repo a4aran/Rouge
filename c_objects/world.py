@@ -1,7 +1,9 @@
+import ast
 import random
 
 import pygame
 
+import ar_math_helper
 import current_game_run_data
 import gl_var
 from Illusion.frame_data_f import FrameData
@@ -14,7 +16,7 @@ from c_objects.entities.projectiles import Projectile
 
 class World:
     def __init__(self):
-        self.offset = pygame.Vector2(180,30)
+        self.offset = pygame.Vector2(gl_var.window_center[0]-540/2,gl_var.window_center[1]-540/2)
         self.w_size = (540,540)
         self.world_rect = pygame.Rect(self.offset,self.w_size)
 
@@ -40,6 +42,7 @@ class World:
         self.pause_timer = [0,0]
 
         self.upgrade = [False,0]
+        self.just_loaded = False
 
     def update(self,fd: FrameData):
         if not self.game_paused:
@@ -68,8 +71,16 @@ class World:
                 for b in self.boss:
                     for p in self.projectiles:
                         if b.entity_check_collision(p) and b.id:
-                            p.damage_entity(b,self)
-
+                            if not (hasattr(b,"invulnerable") and b.invulnerable):
+                                p.damage_entity(b,self)
+                    if b.entity_check_collision(self.player):
+                        if isinstance(b, bosses.Chaos):
+                            if b.try_to_damage_player():
+                                self.player.damage(b,5)
+                            b.player_damaged()
+                    else:
+                        if isinstance(b, bosses.Chaos):
+                            b.player_damaged_reset()
             self.projectiles = [p for p in self.projectiles if not p.should_delete]
             self.deleted_entities_amount = sum(i.should_delete for i in self.entities)
             self.entities = [e for e in self.entities if not e.should_delete]
@@ -102,17 +113,23 @@ class World:
                         self.vfx_to_show = None
 
     def start_wave(self):
-        current_game_run_data.save_manager.update()
+        current_game_run_data.save_manager.update(self)
         self.wave_count += 1
         self.is_boss_wave = self.wave_count % 10 == 0
 
         self.combined_boss_max_hp = 0
 
         if self.is_boss_wave:
-            boss_number = ((self.wave_count // 10 - 1) % 5)
+            boss_number = ((self.wave_count // 10 - 1) % 2)
 
-            hp_mult = min(1,1 + self.wave_count/2.5) if self.wave_count > 11 else 1
-            self.boss.append(bosses.boss_list[0](self.w_size,hp_mult))
+            hp_mult = ar_math_helper.formulas.boss_hp_mult(self.wave_count)
+            self.boss.append(bosses.boss_list[boss_number](self.w_size,hp_mult))
+
+            if boss_number == 0:
+                self.player.hitbox.pos.xy = (270,270)
+            elif boss_number == 1:
+                self.player.hitbox.pos.xy = (270,(self.w_size[1]/4) * 3)
+
 
             for b in self.boss:
                 if isinstance(b, Enemy):
@@ -124,7 +141,7 @@ class World:
                 vector = pygame.Vector2(random.randint(length_range[0],length_range[1]),0).rotate(random.randint(0,359))
                 try_pos = vector + map_center
                 self.spawn_enemy(try_pos)
-        self.player.hitbox.pos.xy = (270,270)
+            self.player.hitbox.pos.xy = (270,270)
         self.player.reset_cooldowns()
         self.wave_on = True
 
@@ -170,21 +187,7 @@ class World:
             self.entities.append(classes[type](pos, health=scaling_hp, spd=scaling_spd))
 
     def get_scaling(self,type: str):
-        scaling = 35
-        if 10 < self.wave_count < 20:
-            scaling *= 1 + (self.wave_count - 5) / 65
-        elif 20 < self.wave_count < 30:
-            scaling *= 1 + (self.wave_count-5) / 35
-        elif 40 > self.wave_count > 30:
-            scaling *= 1 + (self.wave_count-5) / 25
-        elif  50 > self.wave_count > 40:
-            scaling *= 1 + (self.wave_count-5) / 15
-        elif 75 > self.wave_count > 50:
-            scaling *= self.wave_count / 5
-        elif 100 > self.wave_count > 75:
-            scaling *= self.wave_count / 2
-        elif self.wave_count > 100:
-            scaling *= self.wave_count * 1.2
+        scaling = 35 * ar_math_helper.formulas.enemy_scaling(self.wave_count)
         if type == "simple": return scaling,scaling*0.9
         if type == "faster": return scaling*0.7,scaling*1.05
         if type == "double": return scaling*2,scaling*0.65
@@ -214,27 +217,51 @@ class World:
         self.should_show_vfx = False
         self.vfx_to_show = None
         self.upgrade = [False, 0]
+        self.just_loaded = False
 
-        print(current_game_run_data.save_manager.upgrade_file_save_decoded)
-        current_game_run_data.cur_run_data.load_save(current_game_run_data.save_manager.upgrade_file_save_decoded)
-        self.player.reset()
+        if current_game_run_data.cur_run_data.should_load_save:
+            current_game_run_data.cur_run_data.load_save(current_game_run_data.save_manager.upgrade_file_save_decoded)
+            self.player.reset()
+            self.load_other(current_game_run_data.save_manager.other_file_save_decoded)
+            if self.wave_count != 0: self.wave_on =True
+            current_game_run_data.cur_run_data.should_load_save = False
 
     def wave_end(self):
-        if self.wave_count > 1:
-            if self.wave_count % 10 == 0:
-                self.upgrade[0] = True
-                self.upgrade[1] = 3
-            elif self.wave_count % 2 == 0:
-                self.upgrade[0] = True
-                self.upgrade[1] = 1
-            elif self.wave_count % 5 == 0:
-                self.upgrade[0] = True
-                self.upgrade[1] = 2
+        if not self.just_loaded:
+            if self.wave_count > 1:
+                print(self.wave_count % 5)
+                if self.wave_count % 10 == 0:
+                    self.upgrade[0] = True
+                    self.upgrade[1] = 3
+                    print("3")
+                elif self.wave_count % 5 == 0:
+                    self.upgrade[0] = True
+                    self.upgrade[1] = 2
+                    print("2")
+                elif self.wave_count % 2 == 0:
+                    self.upgrade[0] = True
+                    self.upgrade[1] = 1
+                    print("1")
+                else:
+                    self.start_wave()
             else:
                 self.start_wave()
         else:
+            self.just_loaded = False
             self.start_wave()
 
     def resume_after_upgrade(self):
         self.upgrade = [False, 0]
         self.start_wave()
+
+    def load_other(self,data:str):
+        if data != "":
+            data = ast.literal_eval(data)
+            self.player.health = data["player_health"]
+            self.player.max_health = data["player_max_hp"]
+            current_game_run_data.cur_run_data.heal_q = data["heal_q"]
+            current_game_run_data.cur_run_data.last_max_health_upgrade_wave = data["last_max_health_upgrade_wave"]
+            current_game_run_data.cur_run_data.add_max_hp = data["add_max_hp"]
+            self.wave_count = data["wave"]
+            current_game_run_data.cur_run_data.selected_character = data["selected_character"]
+            self.just_loaded = True
