@@ -19,7 +19,8 @@ class RunManager:
                 "double_trouble": [False, -10],
                 "bounce": [False, 0.2, "damage", -0.1],
                 "blitz": [False,2,"damage",-0.25],
-                "particle_accelerator": [False,0.01,"bullet_speed",-0.3]
+                "particle_accelerator": [False,0.01,"bullet_speed",-0.3],
+                "homing_b": [False,8,"bullet_speed",-0.2]
             },
             {
                 "shoot_on_death": [False,1,4],
@@ -36,7 +37,7 @@ class RunManager:
         self.last_max_health_upgrade_wave = 0
         self.add_max_hp = 0
 
-        self.selected_character = 0
+        self.selected_character = "player0"
 
         self.request_player_upgrade = False
 
@@ -61,7 +62,8 @@ class RunManager:
                 "double_trouble": [False, -10],
                 "bounce": [False, 0.2, "damage", -0.1],
                 "blitz": [False,3,"damage",-0.25],
-                "particle_accelerator": [False,0.01,"bullet_speed",-0.4]
+                "particle_accelerator": [False,0.01,"bullet_speed",-0.4],
+                "homing_b": [False, 8, "bullet_speed", -0.2]
             }
         self.active_upgrades[2]={
                 "shoot_on_death": [False,1,4],
@@ -77,7 +79,7 @@ class RunManager:
         self.last_max_health_upgrade_wave = 0
         self.add_max_hp = 0
         self.request_player_upgrade = False
-        self.selected_character = 0
+        self.selected_character = "player0"
 
     def get_second_lvl(self,name: str) -> list:
         return self.active_upgrades[1][name]
@@ -121,7 +123,7 @@ cur_run_data = RunManager()
 
 class SaveManager:
     def __init__(self):
-        self.version = 2
+        self.version = 3
         self.coder = self._Coder()
         self.upgrade_save_data_decoded_str = str(cur_run_data.active_upgrades)
         self.upgrade_save_data_encoded = self.coder.encode(self.upgrade_save_data_decoded_str)

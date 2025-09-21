@@ -7,6 +7,7 @@ import ar_math_helper
 import current_game_run_data
 import gl_var
 from Illusion.frame_data_f import FrameData
+from Illusion.go import GlobalObjects
 from ar_math_helper import Circle
 from c_objects.entities import bosses
 from c_objects.entities.enemies import SimpleAIEnemy, FasterSAiEnemy, DoubleSAiEnemy, ShootingEnemy, Enemy
@@ -15,7 +16,7 @@ from c_objects.entities.player import Player
 from c_objects.entities.projectiles import Projectile
 
 class World:
-    def __init__(self):
+    def __init__(self,go: GlobalObjects):
         self.offset = pygame.Vector2(gl_var.window_center[0]-540/2,gl_var.window_center[1]-540/2)
         self.w_size = (540,540)
         self.world_rect = pygame.Rect(self.offset,self.w_size)
@@ -44,12 +45,14 @@ class World:
         self.upgrade = [False,0]
         self.just_loaded = False
 
+        self.textures = {"chaos": go.get_custom_object("chaos_boss_sprites")}
+
     def update(self,fd: FrameData):
         if not self.game_paused:
             self.combined_boss_hp = 0
-            self.player.update(self,fd)
             for e in self.entities:
                 e.update(self,fd)
+            self.player.update(self,fd)
             for p in self.projectiles:
                 if isinstance(p,Entity): p.update(self,fd)
             for ep in self.enemy_projectiles:
@@ -123,7 +126,7 @@ class World:
             boss_number = ((self.wave_count // 10 - 1) % 2)
 
             hp_mult = ar_math_helper.formulas.boss_hp_mult(self.wave_count)
-            self.boss.append(bosses.boss_list[boss_number](self.w_size,hp_mult))
+            self.boss.append(bosses.boss_list[boss_number](self.w_size,hp_mult,self.textures["chaos"]))
 
             if boss_number == 0:
                 self.player.hitbox.pos.xy = (270,270)
@@ -137,7 +140,7 @@ class World:
         else:
             map_center = pygame.Vector2(self.w_size[0]/2,self.w_size[1]/2)
             length_range = (150,int(self.w_size[0]/2 - 20))
-            for n in range(self.wave_count + 4):
+            for n in range(ar_math_helper.formulas.enemy_count(self.wave_count)):
                 vector = pygame.Vector2(random.randint(length_range[0],length_range[1]),0).rotate(random.randint(0,359))
                 try_pos = vector + map_center
                 self.spawn_enemy(try_pos)
@@ -208,6 +211,7 @@ class World:
     def reset(self):
         self.player = Player()
         self.entities = []
+        self.boss = []
         self.projectiles = []
         self.enemy_projectiles = []
 
@@ -249,6 +253,19 @@ class World:
         else:
             self.just_loaded = False
             self.start_wave()
+
+    def get_closest_enemy(self, pos: pygame.Vector2):
+        closest_enemy = None
+        closest_dist_sq = float("inf")
+
+        for e in self.entities:
+            if isinstance(e,Enemy):
+                dist_sq = (e.hitbox.pos - pos).length_squared()
+                if dist_sq < closest_dist_sq:
+                    closest_dist_sq = dist_sq
+                    closest_enemy = e
+
+        return closest_enemy
 
     def resume_after_upgrade(self):
         self.upgrade = [False, 0]

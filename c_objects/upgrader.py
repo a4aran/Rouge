@@ -73,7 +73,7 @@ class Upgrader:
             if self.level == 1 and possible_upgrades_list[3]:
                 self.level = 4 if random.random() < 0.3 else 1
             if self.level == 2 and possible_upgrades_list[3]:
-                self.level = 4 if random.random() < 0.6 else 1
+                self.level = 4 if random.random() < 0.6 else 2
             return random.choice(possible_upgrades_list[self.level - 1])
 
         def get_stats(self,wave):
@@ -107,6 +107,9 @@ class Upgrader:
                 elif self.kind == "particle_accelerator":
                     temp.append(cur_run_data.active_upgrades[1]["particle_accelerator"][1])
                     temp.append(round(cur_run_data.active_upgrades[1]["particle_accelerator"][3] * 100))
+                elif self.kind == "homing_b":
+                    temp.append(cur_run_data.active_upgrades[1]["homing_b"][1])
+                    temp.append(round(cur_run_data.active_upgrades[1]["homing_b"][3] * 100))
             if self.level == 3:
                 if self.kind == "shoot_on_death":
                     temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][1])

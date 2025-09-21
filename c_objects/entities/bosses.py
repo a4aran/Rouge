@@ -4,6 +4,7 @@ import random
 import pygame
 
 import ar_math_helper
+import drawer
 import gl_var
 from Illusion.frame_data_f import FrameData
 from c_objects.entities.enemies import Enemy, SimpleAIEnemy
@@ -13,7 +14,7 @@ import ar_math_helper as ar_math
 
 # - Crowd Master Boss - #
 class CrowdMaster(Enemy):
-    def __init__(self, w_size,hp_mult):
+    def __init__(self, w_size,hp_mult,texture: list[pygame.Surface,pygame.Surface,pygame.Surface]):
         super().__init__(pygame.Vector2(w_size[0]/2,0), 120, 1500 * hp_mult, 0)
         self.w_size = w_size
         self.no_pierce = True
@@ -21,6 +22,8 @@ class CrowdMaster(Enemy):
         self.shooting_cooldown = [0.5,2]
         self.shooting = [0,0.1,0,6,False]
         self.ang_to_p = 0
+        self.has_collision = True
+        self.texture = texture
 
     def draw(self, surf: pygame.Surface, offset: pygame.Vector2):
         temp = pygame.Surface(self.w_size, pygame.SRCALPHA)
@@ -50,7 +53,7 @@ class CrowdMaster(Enemy):
         if self.minion_spawn_cooldown[0] >= self.minion_spawn_cooldown[1]:
             self.minion_spawn_cooldown[0] = 0
             if len(world.entities) < 15:
-                self.spawn_minions(world,4)
+                self.spawn_minions(world,3)
             else:
                 self.spawn_minions(world,1)
 
@@ -92,21 +95,18 @@ class SpawnProjectile(Entity):
         self.hitbox.pos += vel
 
     def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
-        double_radius = self.hitbox.radius * 2
-        temp = pygame.Surface((double_radius,double_radius),pygame.SRCALPHA)
-        temp.fill((255,255,255))
-        pygame.draw.rect(temp,(0,0,0),(0,0,double_radius,double_radius),2)
-        temp = pygame.transform.rotate(temp,-self.angle)
+        temp = drawer.triangle(self.hitbox.radius + 3,2,self.color,self.outline_color)
+        temp = pygame.transform.rotate(temp,-self.angle-90)
         surf.blit(temp,(offset.x + self.hitbox.pos.x - temp.get_width()/2,offset.y + self.hitbox.pos.y - temp.get_height()/2))
 
     def force_spawn(self,w_size):
-        if 0 < self.hitbox.pos.x or self.hitbox.pos.x > w_size[0]\
-            or 0 < self.hitbox.pos.y or self.hitbox.pos.y > w_size[1]:
+        if 0 > self.hitbox.pos.x or self.hitbox.pos.x > w_size[0]\
+            or 0 > self.hitbox.pos.y or self.hitbox.pos.y > w_size[1]:
             self.dist = -1
 
 # - Chaos Boss - #
 class Chaos(Enemy):
-    def __init__(self, w_size,hp_mult):
+    def __init__(self, w_size,hp_mult,texture: list[pygame.Surface,pygame.Surface,pygame.Surface]):
         super().__init__(pygame.Vector2(w_size[0]/2,w_size[1]/4), 60, 1111 * hp_mult, 220)
         self.max_hp = self.health
         self.w_size = w_size
@@ -120,6 +120,8 @@ class Chaos(Enemy):
         self.invulnerable = False
         self.shoot_cooldown = [0,0.3]
         self.phase = self.get_phase()
+        self.has_collision = False
+        self.texture = texture
 
     def update(self,world: "World",frame_data: FrameData):
         self.flash_countdown(frame_data.dt)
@@ -177,13 +179,27 @@ class Chaos(Enemy):
         self.invulnerable = not self.try_to_damage_player()
 
     def shoot(self,world):
-        ang = (self.direction - 180 + random.randint(-10 * self.phase,10 * self.phase))%360 if random.random() < 0.7 else (ar_math.angle_to_target(self.hitbox.pos,world.player.hitbox.pos) + random.randint(-30,30))%360
-        pos = self.hitbox.pos + pygame.Vector2(self.hitbox.radius, 0).rotate(ang)
+        angs = [0,45,90,135,180,225,270,315]
+        r_ang = []
+        for ang_t in angs:
+            temp = self.hitbox.pos.copy()
+            temp += pygame.Vector2(100 + self.hitbox.radius,0).rotate(ang_t)
+            if not (0 > temp.x or temp.x > self.w_size[0]
+                    or 0  > temp.y or temp.y > self.w_size[1]):
+                print("aaah")
+                r_ang.append(ang_t)
+        angle = random.choice(r_ang) if r_ang else None
+        if angle is None: return
+        fire_cone = 15
+        ang = (angle + random.randint(ar_math.rng_rounding(-fire_cone / self.phase),ar_math.rng_rounding(fire_cone / self.phase)))%360 \
+            if random.random() < 0.7 else (
+                (ar_math.angle_to_target(self.hitbox.pos,world.player.hitbox.pos) + random.randint(ar_math.rng_rounding(-fire_cone*1.5),ar_math.rng_rounding(-fire_cone*1.5)))%360)
+        pos = self.hitbox.pos + pygame.Vector2(self.hitbox.radius + 7, 0).rotate(ang)
         if self.phase == 1:
             world.enemy_projectiles.append(EnemyProj(pos,ang,200,2))
         else:
             if random.random() < 0.3:
-                world.entities.append(SpawnProjectile(pos,ang,random.randint(150,200),["faster"],[1],200))
+                world.entities.append(SpawnProjectile(pos,ang,random.randint(200,600),["faster"],[1],250))
             else:
                 world.enemy_projectiles.append(EnemyProj(pos,ang,200,2))
 
@@ -193,5 +209,15 @@ class Chaos(Enemy):
         else:
             return 1
 
+    def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
+        temp = pygame.Surface((128,128),pygame.SRCALPHA)
+        temp.blit(self.texture[0],(0,0))
+        if self.try_to_damage_player():
+            temp.blit(self.texture[2])
+        else:
+            temp.blit(self.texture[1])
+        pos = offset + self.hitbox.pos
+        pos -= pygame.Vector2(64,64)
+        surf.blit(temp,pos)
 
 boss_list = [CrowdMaster, Chaos]

@@ -41,6 +41,16 @@ class Circle:
             return True  # intersects segment
         return False
 
+    def intersection_length_with_other(self,other: "Circle"):
+        distance = (self.pos - other.pos).length()
+        if distance <= (self.radius + other.radius):
+            return self.radius + other.radius - distance
+        else:
+            return 0
+
+    def copy(self):
+        return Circle(self.pos.copy(), self.radius)
+
 def angle_to_mouse(pos: pygame.Vector2) -> float:
     mouse_pos = pygame.Vector2(pygame.mouse.get_pos())
     delta = mouse_pos - pos
@@ -57,6 +67,10 @@ def angle_to_target(main: pygame.math.Vector2, target: pygame.math.Vector2) -> f
 def gen_id():
     gl_var.entities_id_counter +=1
     return gl_var.entities_id_counter
+
+def rng_rounding(num: float):
+    chance = num - int(num)
+    return int(num) + 1 if random.random() < chance else int(num)
 
 class FormulaProvider:
     def __init__(self):
@@ -109,6 +123,10 @@ class FormulaProvider:
         return scaling
 
     @staticmethod
+    def enemy_count(wave):
+        return wave + 4
+
+    @staticmethod
     def _mult_modifier(wave: int) -> float:
         if wave > 75:
             return 0.7
@@ -124,5 +142,6 @@ class FormulaProvider:
     @staticmethod
     def random_mult():
         return random.randint(90,110) / 100
+
 
 formulas = FormulaProvider()

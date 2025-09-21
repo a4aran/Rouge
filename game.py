@@ -28,6 +28,8 @@ class Game(IllusionBuiltInsPreset):
         self._global_objects.add_custom_object("level_3_up",self._importer.return_import_animated_sprite("upgrades/level_3.png",2,4))
         self._global_objects.add_custom_object("level_4_up",self._importer.return_import_animated_sprite("upgrades/level_4.png",2,4))
 
+        self._global_objects.add_custom_object("chaos_boss_sprites",self._importer.return_import_animated_sprite("entities/bosses/chaos.png",3,4))
+
 
         self._scene_manager.add_scene(MainMenuSC(self._importer, self._assets, self._music_manager, self._global_objects))
         self._scene_manager.add_scene(CharacterSelectionSC(self._importer,self._assets,self._music_manager,self._global_objects))

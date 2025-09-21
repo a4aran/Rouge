@@ -25,7 +25,7 @@ class Enemy(Entity):
     def damage(self,world: "World",amount: float,death_info: dict,effects: list = False):
         self.health -= amount
         if self.health <= 0:
-            self.on_death(death_info,world)
+            self.on_killed(death_info, world)
             return
         if effects:
             for ef in effects:
@@ -33,7 +33,7 @@ class Enemy(Entity):
                     self.apply_freeze(ef[1])
         self.trigger_flash()
 
-    def on_death(self, death_info: dict, world: "World"):
+    def on_killed(self, death_info: dict, world: "World"):
         if death_info is not None:
             if death_info.get("shoot", False) and world.entities:
                 # valid targets (exclude self)
@@ -101,6 +101,7 @@ class SimpleAIEnemy(Enemy):
         self.outline_color = (255,0,0)
 
     def update(self,world: "World",frame_data: FrameData):
+        self.check_collision_with_boss(world)
         self.update_status_effects(frame_data)
         loc_speed,self.a_atk_dmg = self.get_local_vars()
         self.flash_countdown(frame_data.dt)
@@ -124,18 +125,23 @@ class SimpleAIEnemy(Enemy):
         self.direction = random.randint(0, 359)
         self.length = random.randint(self.length_range[0], self.length_range[1])
 
-        eta = pygame.Vector2(50,0).rotate(self.direction).normalize() + self.hitbox.pos
+        eta = pygame.Vector2(50,0).rotate(self.direction) + self.hitbox.pos
         radius = self.hitbox.radius
         x, y = eta
         if (x < 0 + radius or x > clamp_size[0] - radius or
                 y < 0 + radius or y > clamp_size[1] - radius):
             self.direction =  ar_math_helper.angle_to_target(self.hitbox.pos,player.hitbox.pos)
             print("to player")
-        if boss:
-            for b in boss:
-                if isinstance(b,Entity) and b.hitbox.line_circle_collision(self.hitbox.pos,eta):
-                    self.direction =  ar_math_helper.angle_to_target(self.hitbox.pos,player.hitbox.pos)
-                    print("to player")
+
+    def check_collision_with_boss(self,world: "World"):
+        if world.boss:
+            for b in world.boss:
+                if self.hitbox.circle_collision(b.hitbox):
+                    self.hitbox.pos += (pygame.Vector2(
+                        self.hitbox.intersection_length_with_other(b.hitbox),0).
+                                        rotate((ar_math_helper.angle_to_target(self.hitbox.pos,b.hitbox.pos) - 180)%360))*1.5
+                    self.direction = ar_math_helper.angle_to_target(self.hitbox.pos, world.player.hitbox.pos)
+                    self.length = random.randint(self.length_range[0], self.length_range[1])
 
     def clamp_pos(self, clamp_size: tuple[int, int]):
         radius = self.hitbox.radius

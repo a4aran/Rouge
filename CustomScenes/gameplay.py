@@ -28,7 +28,7 @@ class GamePlaySC(Scene):
         temp.new_img("overlay",importer.get_sprite("gameplay_bg"),gl_var.window_center)
 
         self.paused = False
-        self._objs.append(c_objects.world.World())
+        self._objs.append(c_objects.world.World(global_objects))
 
         self.create_ui("hud")
         temp = self.get_ui("hud")
@@ -171,10 +171,10 @@ class GamePlaySC(Scene):
                 else:
                     self.vfx_to_show = [False, None]
                 self.data["wave"] = temp.wave_count
-            if temp.player.character[current_game_run_data.cur_run_data.selected_character]["cooldown"][2]:
+            if temp.player.character["ability"]["cooldown"][2]:
                 self.super_percent = 1
             else:
-                self.super_percent = temp.player.character[current_game_run_data.cur_run_data.selected_character]["cooldown"][0] / temp.player.character[current_game_run_data.cur_run_data.selected_character]["cooldown"][1]
+                self.super_percent = temp.player.character["ability"]["cooldown"][0] / temp.player.character["ability"]["cooldown"][1]
 
             if self.super_percent == 1:
                 self.super_diamond = self.super_diamond_sprites[1]
