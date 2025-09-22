@@ -135,8 +135,8 @@ class World:
 
 
             for b in self.boss:
-                if isinstance(b, Enemy):
-                    self.combined_boss_max_hp += b.health
+                if isinstance(b, bosses.Boss):
+                    self.combined_boss_max_hp += b.max_hp
         else:
             map_center = pygame.Vector2(self.w_size[0]/2,self.w_size[1]/2)
             length_range = (150,int(self.w_size[0]/2 - 20))

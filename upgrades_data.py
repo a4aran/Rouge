@@ -1,3 +1,5 @@
+from ar_math_helper import formulas
+
 lvl1 = {
     "damage": 0,
     "pierce": 0,
@@ -22,4 +24,61 @@ lvl4 = {
     "shoot_on_death_up": 1,
     "lifesteal_up": 0.05,
 }
+
+# -- Stats Provider -- #
+
+lvl1_stats = {
+    "damage": lambda data, wave, context, extra: [formulas.damage_upgrade(wave)],
+    "pierce": lambda data, wave, context, extra: [1],
+    "bullet_speed": lambda data, wave, context, extra: [formulas.bullet_speed(wave)],
+    "firerate": lambda data, wave, context, extra: [formulas.firerate_upgrade(wave)],
+}
+lvl2_stats = {
+    "freezing_b": lambda data, wave, context, extra: [data[1],round(data[3] * 100)],
+    "triple_shot": lambda data, wave, context, extra: [
+        round(data[1] * 100 * context["chance_mult"]),
+        round(data[3] * 100)],
+    "double_trouble": lambda data, wave, context, extra: [""],
+    "bounce": lambda data, wave, context, extra: [
+        round(data[1] * 100 * context["chance_mult"]),
+        round(data[3] * 100)
+        ],
+    "blitz": lambda data, wave, context, extra: [
+        round(data[1]),
+        round(data[3] * 100)
+    ],
+    "particle_accelerator": lambda data, wave, context, extra: [
+        data[1]
+    ],
+    "homing_b": lambda data, wave, context, extra: [
+        data[1],
+        round(data[3] * 100)
+    ]
+}
+lvl3_stats = {
+    "shoot_on_death":[
+        lambda data, wave, context, extra: [data[1],data[2]],
+    ],
+    "lifesteal":[
+        lambda data, wave, context, extra: [
+            round(data[1] * 100 * context["chance_mult"]),
+            context["lifesteal_amount"],
+            round(data[2] * 100 * context["chance_mult"]),
+        ],
+    ]
+}
+
+lvl4_stats = {
+        "shoot_on_death_up": lambda data, wave, ctx, extra: [
+            data,
+            extra[2]["shoot_on_death"][1],
+            extra[2]["shoot_on_death"][2],
+        ],
+        "lifesteal_up": lambda data, wave, ctx, extra: [
+            data,
+            extra[2]["lifesteal"][1],
+            extra[2]["lifesteal"][2],
+        ],
+}
+
 

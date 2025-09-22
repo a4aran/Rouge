@@ -12,18 +12,27 @@ from c_objects.entities.entity import Entity
 from c_objects.entities.projectiles import EnemyProj
 import ar_math_helper as ar_math
 
-# - Crowd Master Boss - #
-class CrowdMaster(Enemy):
-    def __init__(self, w_size,hp_mult,texture: list[pygame.Surface,pygame.Surface,pygame.Surface]):
-        super().__init__(pygame.Vector2(w_size[0]/2,0), 120, 1500 * hp_mult, 0)
+class Boss(Enemy):
+    def __init__(self, pos: pygame.Vector2, hitbox_radius: float,hp:float,spd:float,difficulty_mult: float, w_size, no_pierce: bool, has_collision: bool):
+        super().__init__(pos, hitbox_radius,999999,spd)
+        self.no_pierce = no_pierce
+        self.has_collision = has_collision
+        self.difficulty_mult = difficulty_mult
         self.w_size = w_size
-        self.no_pierce = True
+        self.max_hp = max(hp * self.difficulty_mult * 0.75,hp)
+        self.health = self.max_hp
+        self.invulnerable = False
+
+# - Crowd Master Boss - #
+class CrowdMaster(Boss):
+    def __init__(self, w_size, diffculty_mult, texture: list[pygame.Surface,pygame.Surface,pygame.Surface]):
+        super().__init__(pygame.Vector2(w_size[0]/2,0), 120, 1500 , 0,diffculty_mult, w_size,True,True)
         self.minion_spawn_cooldown = [2,3]
         self.shooting_cooldown = [0.5,2]
         self.shooting = [0,0.1,0,6,False]
         self.ang_to_p = 0
-        self.has_collision = True
         self.texture = texture
+        self.color = (255,255,0)
 
     def draw(self, surf: pygame.Surface, offset: pygame.Vector2):
         temp = pygame.Surface(self.w_size, pygame.SRCALPHA)
@@ -105,11 +114,9 @@ class SpawnProjectile(Entity):
             self.dist = -1
 
 # - Chaos Boss - #
-class Chaos(Enemy):
+class Chaos(Boss):
     def __init__(self, w_size,hp_mult,texture: list[pygame.Surface,pygame.Surface,pygame.Surface]):
-        super().__init__(pygame.Vector2(w_size[0]/2,w_size[1]/4), 60, 1111 * hp_mult, 220)
-        self.max_hp = self.health
-        self.w_size = w_size
+        super().__init__(pygame.Vector2(w_size[0]/2,w_size[1]/4), 60, 1111, 220, hp_mult,w_size,False,False)
         self.ang_to_p = 0
         self.get_new_direction = True
         self.direction = 0
@@ -117,10 +124,8 @@ class Chaos(Enemy):
         self.touch_dmg_cooldown = [0,0.5,True]
         self.can_touch_damage= True
         self.color = (100,100,130)
-        self.invulnerable = False
         self.shoot_cooldown = [0,0.3]
         self.phase = self.get_phase()
-        self.has_collision = False
         self.texture = texture
 
     def update(self,world: "World",frame_data: FrameData):

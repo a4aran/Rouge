@@ -25,6 +25,13 @@ class RunManager:
 
         self.should_load_save = False
 
+        self.stats = {
+            1: u_data.lvl1_stats.copy(),
+            2: u_data.lvl2_stats.copy(),
+            3: u_data.lvl3_stats.copy(),
+            4: u_data.lvl4_stats.copy()
+        }
+
     def round_active_upgrades(self):
         level = self.active_upgrades[0]
         for kind in level:
@@ -78,7 +85,15 @@ class RunManager:
         if self.get_second_lvl("double_trouble")[0]:
             m *= 2
         return m
-    
+
+    def get_context(self):
+        return {
+            "chance_mult": self.chance_mult(),
+            "lifesteal_amount": self.lifesteal_amount,
+            "lifesteal": self.get_second_lvl("lifesteal"),
+            "shoot_on_death": self.active_upgrades[2]["shoot_on_death"]
+        }
+
     def load_save(self,save_data):
         if save_data == "":
             self.reset()
