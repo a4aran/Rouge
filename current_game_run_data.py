@@ -1,35 +1,17 @@
 import ast
 import random
 from typing import TYPE_CHECKING
+import upgrades_data as u_data
 if TYPE_CHECKING:
     from c_objects.world import World
 
 class RunManager:
     def __init__(self):
         self.active_upgrades = [
-            {
-                "damage": 0,
-                "pierce": 0,
-                "bullet_speed": 0,
-                "firerate": 0,
-            },
-            {
-                "freezing_b": [False, 10, "firerate", -0.1],
-                "triple_shot": [False, 0.10, "firerate", -0.1],
-                "double_trouble": [False, -10],
-                "bounce": [False, 0.2, "damage", -0.1],
-                "blitz": [False,2,"damage",-0.25],
-                "particle_accelerator": [False,0.01,"bullet_speed",-0.3],
-                "homing_b": [False,8,"bullet_speed",-0.2]
-            },
-            {
-                "shoot_on_death": [False,1,4],
-                "lifesteal": [False,0.05,0.25]
-            },
-            {
-                "shoot_on_death_up": 1,
-                "lifesteal_up": 0.05,
-            }
+            u_data.lvl1.copy(),
+            u_data.lvl2.copy(),
+            u_data.lvl3.copy(),
+            u_data.lvl4.copy()
         ]
 
         self.lifesteal_amount = 1
@@ -53,26 +35,12 @@ class RunManager:
 
 
     def reset(self):
-        level = self.active_upgrades[0]
-        for kind in level:
-            level[kind] = 0
-        self.active_upgrades[1]=            {
-                "freezing_b": [False, 10, "firerate", -0.1],
-                "triple_shot": [False, 0.10, "firerate", -0.1],
-                "double_trouble": [False, -10],
-                "bounce": [False, 0.2, "damage", -0.1],
-                "blitz": [False,3,"damage",-0.25],
-                "particle_accelerator": [False,0.01,"bullet_speed",-0.4],
-                "homing_b": [False, 8, "bullet_speed", -0.2]
-            }
-        self.active_upgrades[2]={
-                "shoot_on_death": [False,1,4],
-                "lifesteal": [False,0.05,0.25]
-            }
-        self.active_upgrades[3] ={
-                "shoot_on_death_up": 1,
-                "lifesteal_up": 0.05,
-            }
+        self.active_upgrades = [
+            u_data.lvl1.copy(),
+            u_data.lvl2.copy(),
+            u_data.lvl3.copy(),
+            u_data.lvl4.copy()
+        ]
 
         self.heal_q = 0
         self.lifesteal_amount = 1
