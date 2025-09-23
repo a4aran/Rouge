@@ -13,20 +13,21 @@ from c_objects.entities.projectiles import EnemyProj
 import ar_math_helper as ar_math
 
 class Boss(Enemy):
-    def __init__(self, pos: pygame.Vector2, hitbox_radius: float,hp:float,spd:float,difficulty_mult: float, w_size, no_pierce: bool, has_collision: bool):
+    def __init__(self, pos: pygame.Vector2, hitbox_radius: float,hp:float,spd:float,difficulty_mult: float,additional_hp_mult: float
+                 , w_size, no_pierce: bool, has_collision: bool):
         super().__init__(pos, hitbox_radius,999999,spd)
         self.no_pierce = no_pierce
         self.has_collision = has_collision
         self.difficulty_mult = difficulty_mult
         self.w_size = w_size
-        self.max_hp = max(hp * self.difficulty_mult * 0.75,hp)
+        self.max_hp = max(hp * self.difficulty_mult * additional_hp_mult,hp)
         self.health = self.max_hp
         self.invulnerable = False
 
 # - Crowd Master Boss - #
 class CrowdMaster(Boss):
     def __init__(self, w_size, diffculty_mult, texture: list[pygame.Surface,pygame.Surface,pygame.Surface]):
-        super().__init__(pygame.Vector2(w_size[0]/2,0), 120, 1500 , 0,diffculty_mult, w_size,True,True)
+        super().__init__(pygame.Vector2(w_size[0]/2,0), 120, 1500 , 0,diffculty_mult, 1.2, w_size,True,True)
         self.minion_spawn_cooldown = [2,3]
         self.shooting_cooldown = [0.5,2]
         self.shooting = [0,0.1,0,6,False]
@@ -116,7 +117,7 @@ class SpawnProjectile(Entity):
 # - Chaos Boss - #
 class Chaos(Boss):
     def __init__(self, w_size,hp_mult,texture: list[pygame.Surface,pygame.Surface,pygame.Surface]):
-        super().__init__(pygame.Vector2(w_size[0]/2,w_size[1]/4), 60, 1111, 220, hp_mult,w_size,False,False)
+        super().__init__(pygame.Vector2(w_size[0]/2,w_size[1]/4), 60, 1111, 220, hp_mult, 0.9,w_size, False,False)
         self.ang_to_p = 0
         self.get_new_direction = True
         self.direction = 0

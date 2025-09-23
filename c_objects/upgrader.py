@@ -76,59 +76,28 @@ class Upgrader:
                 self.level = 4 if random.random() < 0.6 else 2
             return random.choice(possible_upgrades_list[self.level - 1])
 
-        def get_stats(self,wave):
-            temp = []
-            if self.level == 1:
-                if self.kind == "damage":
-                    temp.append(formulas.damage_upgrade(wave))
-                elif self.kind == "pierce":
-                    temp.append(1)
-                elif self.kind == "bullet_speed":
-                    temp.append(formulas.b_speed_upgrade(wave))
-                elif self.kind == "firerate":
-                    temp.append(formulas.firerate_upgrade(wave))
-                elif self.kind == "heal":
-                    temp.append(10)
-            if self.level == 2:
-                if self.kind == "freezing_b":
-                    temp.append(cur_run_data.active_upgrades[1]["freezing_b"][1])
-                    temp.append(round(cur_run_data.active_upgrades[1]["freezing_b"][3] * 100))
-                elif self.kind == "triple_shot":
-                    temp.append(round(cur_run_data.active_upgrades[1]["triple_shot"][1] * 100 * cur_run_data.chance_mult()))
-                    temp.append(round(cur_run_data.active_upgrades[1]["triple_shot"][3] * 100))
-                elif self.kind == "bounce":
-                    temp.append(round(cur_run_data.active_upgrades[1]["bounce"][1] * 100 * cur_run_data.chance_mult()))
-                    temp.append(round(cur_run_data.active_upgrades[1]["bounce"][3] * 100))
-                elif self.kind == "double_trouble":
-                    temp.append("")
-                elif self.kind == "blitz":
-                    temp.append(round(cur_run_data.active_upgrades[1]["blitz"][1]))
-                    temp.append(round(cur_run_data.active_upgrades[1]["blitz"][3] * 100))
-                elif self.kind == "particle_accelerator":
-                    temp.append(cur_run_data.active_upgrades[1]["particle_accelerator"][1])
-                    temp.append(round(cur_run_data.active_upgrades[1]["particle_accelerator"][3] * 100))
-                elif self.kind == "homing_b":
-                    temp.append(cur_run_data.active_upgrades[1]["homing_b"][1])
-                    temp.append(round(cur_run_data.active_upgrades[1]["homing_b"][3] * 100))
-            if self.level == 3:
-                if self.kind == "shoot_on_death":
-                    temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][1])
-                    temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][2])
-                elif self.kind == "lifesteal":
-                    temp.append(round(cur_run_data.active_upgrades[2]["lifesteal"][1] * 100 * cur_run_data.chance_mult()))
-                    temp.append(cur_run_data.lifesteal_amount)
-                    temp.append(round(cur_run_data.active_upgrades[2]["lifesteal"][2] * 100 * cur_run_data.chance_mult()))
-            if self.level == 4:
-                if self.kind == "shoot_on_death_up":
-                    temp.append(cur_run_data.active_upgrades[3]["shoot_on_death_up"])
-                    temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][1])
-                    temp.append(cur_run_data.active_upgrades[2]["shoot_on_death"][2])
-                elif self.kind == "lifesteal_up":
-                    temp.append(cur_run_data.active_upgrades[3]["lifesteal_up"])
-                    temp.append(cur_run_data.active_upgrades[2]["lifesteal"][1])
-                    temp.append(cur_run_data.active_upgrades[2]["lifesteal"][2])
-            return temp
+        def get_stats(self, wave):
+            level = self.level - 1  # convert 1-based to 0-based index
+            kind = self.kind
+            context = cur_run_data.get_context()
 
+            upgrades = cur_run_data.active_upgrades
+            if kind != "heal":
+                data = upgrades[level].get(kind)
+                if data is None:
+                    return []
+            else:
+                data = [10]
+
+            fn = cur_run_data.stats[level].get(kind)
+            if fn is None:
+                return []
+
+            # some of your lvl3 definitions use [lambda], fix that
+            if isinstance(fn, list):
+                return [f(data, wave, context, upgrades) for f in fn]
+
+            return fn(data, wave, context, upgrades)
 
     def update(self,fd: FrameData):
         click = fd.mouse_buttons[0]

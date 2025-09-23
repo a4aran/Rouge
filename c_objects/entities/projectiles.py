@@ -125,7 +125,7 @@ class HomingPP(PierceProj):
                 if self.target is not None and (self.target.id in self.damaged_entities or self.target not in world.entities): self.target = None
             if self.target is None:
                 ce = world.get_closest_enemy(self.hitbox.pos)
-                if not ce.id in self.damaged_entities:
+                if ce is not None and not ce.id in self.damaged_entities:
                     self.target = ce
                 else:
                     valid_targets = [e for e in world.entities if e.id not in self.damaged_entities]

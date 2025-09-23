@@ -30,8 +30,9 @@ lvl4 = {
 lvl1_stats = {
     "damage": lambda data, wave, context, extra: [formulas.damage_upgrade(wave)],
     "pierce": lambda data, wave, context, extra: [1],
-    "bullet_speed": lambda data, wave, context, extra: [formulas.bullet_speed(wave)],
+    "bullet_speed": lambda data, wave, context, extra: [formulas.b_speed_upgrade(wave)],
     "firerate": lambda data, wave, context, extra: [formulas.firerate_upgrade(wave)],
+    "heal": lambda data, wave, contextm, extra: [data[0]]
 }
 lvl2_stats = {
     "freezing_b": lambda data, wave, context, extra: [data[1],round(data[3] * 100)],
@@ -48,7 +49,8 @@ lvl2_stats = {
         round(data[3] * 100)
     ],
     "particle_accelerator": lambda data, wave, context, extra: [
-        data[1]
+        data[1],
+        round(data[3] * 100)
     ],
     "homing_b": lambda data, wave, context, extra: [
         data[1],
@@ -56,28 +58,24 @@ lvl2_stats = {
     ]
 }
 lvl3_stats = {
-    "shoot_on_death":[
-        lambda data, wave, context, extra: [data[1],data[2]],
+    "shoot_on_death": lambda data, wave, context, extra: [data[1],data[2]],
+    "lifesteal":lambda data, wave, context, extra: [
+        round(data[1] * 100 * context["chance_mult"]),
+        context["lifesteal_amount"],
+        round(data[2] * 100 * context["chance_mult"]),
     ],
-    "lifesteal":[
-        lambda data, wave, context, extra: [
-            round(data[1] * 100 * context["chance_mult"]),
-            context["lifesteal_amount"],
-            round(data[2] * 100 * context["chance_mult"]),
-        ],
-    ]
 }
 
 lvl4_stats = {
-        "shoot_on_death_up": lambda data, wave, ctx, extra: [
+        "shoot_on_death_up": lambda data, wave, context, extra: [
             data,
             extra[2]["shoot_on_death"][1],
             extra[2]["shoot_on_death"][2],
         ],
-        "lifesteal_up": lambda data, wave, ctx, extra: [
-            data,
-            extra[2]["lifesteal"][1],
-            extra[2]["lifesteal"][2],
+        "lifesteal_up": lambda data, wave, context, extra: [
+            round(data * 100),
+            round(extra[2]["lifesteal"][1] * context["chance_mult"] * 100),
+            round(extra[2]["lifesteal"][2] * context["chance_mult"] * 100),
         ],
 }
 

@@ -180,6 +180,7 @@ class Player(Entity):
                         wish_type = "freeze"
             else:
                 wish_type = self.queued_projectile
+                self.queued_projectile = None
 
             for ang in angles:
                 self.shoot(world, wish_type, ang, loc_dmg, loc_b_spd)
