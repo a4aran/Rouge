@@ -50,6 +50,8 @@ class Player(Entity):
         self.queued_projectile = None
         self.complete_initialize = False
 
+        self.save = None
+
     def update(self,world: "World",frame_data: FrameData):
         if self.character is None: self.initialize()
         self.multipliers = {
@@ -282,4 +284,7 @@ class Player(Entity):
     def initialize(self):
         self.character = copy.deepcopy(characters[cur_run_data.selected_character])
         self.health = self.character["base_stats"]["max_hp"]
+        if self.save is not None:
+            self.max_health = self.save["player_max_hp"]
+            self.health = self.save["player_health"]
         self.complete_initialize = True

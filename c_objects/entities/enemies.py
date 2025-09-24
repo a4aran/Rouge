@@ -13,14 +13,17 @@ from current_game_run_data import cur_run_data
 
 
 class Enemy(Entity):
-    def __init__(self, pos: pygame.Vector2, hitbox_radius: float,health: float,speed: float,dmg: float = 10):
+    def __init__(self, pos: pygame.Vector2, hitbox_radius: float,health: float,speed: float,dmg: float = 10,texture_name = None):
         super().__init__(pos, hitbox_radius)
         self.health = health
         self.speed = speed
         self.color = (255,255,0)
         self.status_effects = copy.deepcopy(gl_var.status_effect)
+        self.immune = set()
         self.atk_dmg = dmg
         self.a_atk_dmg = dmg
+        self.texture_name = texture_name
+
 
     def damage(self,world: "World",amount: float,death_info: dict,effects: list = False):
         self.health -= amount
@@ -74,25 +77,28 @@ class Enemy(Entity):
 
     def get_local_vars(self):
         locs = [self.speed,self.atk_dmg]
-        if self.status_effects["time"]["freeze"][2]: locs[0] = 0
+        if self.status_effects["time"]["freeze"][2]:
+            locs[0] = 0 if "freeze" not in self.immune else self.speed * 0.5
         return locs
 
-    def draw_effects(self):
-        cent = (self.hitbox.radius*2,self.hitbox.radius*2)
-        surf = pygame.Surface((self.hitbox.radius*4,self.hitbox.radius*4),SRCALPHA)
+    def draw_effects(self,surf:pygame.Surface,effects_textures: dict,offset:pygame.Vector2):
+        texture_resolution = None
+        if self.hitbox.radius <= 16: texture_resolution = 16
+        if texture_resolution is None: return
+        pos = self.hitbox.pos - pygame.Vector2(texture_resolution,texture_resolution) + offset
 
         if self.status_effects["time"]["freeze"][2]:
-            pygame.draw.circle(surf,(100,255,255,100),cent,self.hitbox.radius*1.5)
+            surf.blit(effects_textures["freeze"][str(texture_resolution)],pos)
 
-        return surf
-
-    def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
-        surf.blit(self.draw_effects(),self.hitbox.pos + offset + pygame.Vector2(self.hitbox.radius * -2,self.hitbox.radius * -2))
-        super().draw(surf,offset)
+    def draw_texture(self,surf:pygame.Surface,offset: pygame.Vector2,texture: list[pygame.Surface,pygame.Surface]):
+        texture_to_use = texture[1] if self.flash_d[2] else texture[0]
+        temp = offset + self.hitbox.pos
+        temp -= pygame.Vector2(texture_to_use.get_width()/2,texture_to_use.get_height()/2)
+        surf.blit(texture_to_use,temp)
 
 class SimpleAIEnemy(Enemy):
-    def __init__(self, pos: pygame.Vector2,health = 50,spd = 50,cooldown = 0.2,length_range: tuple[int,int] = (50,130)):
-        super().__init__(pos, 12.5, health, spd)
+    def __init__(self, pos: pygame.Vector2,health = 50,spd = 50,cooldown = 0.2,length_range: tuple[int,int] = (50,130),texture_name = None):
+        super().__init__(pos, 12.5, health, spd,texture_name=texture_name)
         self.direction = None
         self.cooldown = [cooldown * 0.7,cooldown,True]
         self.length = 0
@@ -164,10 +170,11 @@ class SimpleAIEnemy(Enemy):
 
 class FasterSAiEnemy(SimpleAIEnemy):
     def __init__(self, pos: pygame.Vector2,health = 50,spd=30,speed_mult = 1.1):
-        super().__init__(pos,health=health,spd=spd,cooldown=0.8,length_range=(130,250))
+        super().__init__(pos,health=health,spd=spd,cooldown=0.8,length_range=(130,250),texture_name="ice_cube")
         self.add_speed = self.speed
         self.spd_mult = speed_mult
         self.color = (255,150,0)
+        self.immune.add("freeze")
 
     def update(self,world: "World",frame_data: FrameData):
         self.speed = self.length * self.spd_mult + self.add_speed

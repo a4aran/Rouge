@@ -45,7 +45,16 @@ class World:
         self.upgrade = [False,0]
         self.just_loaded = False
 
-        self.textures = {"chaos": go.get_custom_object("chaos_boss_sprites")}
+        self.textures = {
+            "chaos": go.get_custom_object("chaos_boss_sprites"),
+            "ice_cube_enemy_sprite": go.get_custom_object("ice_cube_enemy_sprite")
+        }
+
+        self.status_effects_textures = {
+            "freeze":{
+                "16": go.get_custom_object("status_effect_freeze_16")
+            }
+        }
 
     def update(self,fd: FrameData):
         if not self.game_paused:
@@ -199,7 +208,12 @@ class World:
     def draw(self,surf: pygame.Surface):
         pygame.draw.rect(surf,(0,0,0),self.world_rect,2)
         for e in self.entities:
-            e.draw(surf,self.offset)
+            if isinstance(e,Enemy):
+                if e.texture_name is None:
+                    e.draw(surf,self.offset)
+                else:
+                    e.draw_texture(surf,self.offset,self.textures[e.texture_name + "_enemy_sprite"])
+                e.draw_effects(surf,self.status_effects_textures,self.offset)
         for b in self.boss:
             b.draw(surf,self.offset)
         self.player.draw(surf,self.offset)
@@ -216,7 +230,7 @@ class World:
         self.enemy_projectiles = []
 
         self.wave_on = False
-        self.wave_count = 0
+        self.wave_count = 15
 
         self.should_show_vfx = False
         self.vfx_to_show = None
@@ -274,11 +288,10 @@ class World:
     def load_other(self,data:str):
         if data != "":
             data = ast.literal_eval(data)
-            self.player.health = data["player_health"]
-            self.player.max_health = data["player_max_hp"]
             current_game_run_data.cur_run_data.heal_q = data["heal_q"]
             current_game_run_data.cur_run_data.last_max_health_upgrade_wave = data["last_max_health_upgrade_wave"]
             current_game_run_data.cur_run_data.add_max_hp = data["add_max_hp"]
             self.wave_count = data["wave"]
             current_game_run_data.cur_run_data.selected_character = data["selected_character"]
+            self.player.save = data
             self.just_loaded = True

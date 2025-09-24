@@ -28,8 +28,11 @@ class Game(IllusionBuiltInsPreset):
         self._global_objects.add_custom_object("level_3_up",self._importer.return_import_animated_sprite("upgrades/level_3.png",2,4))
         self._global_objects.add_custom_object("level_4_up",self._importer.return_import_animated_sprite("upgrades/level_4.png",2,4))
 
+        self._global_objects.add_custom_object("ice_cube_enemy_sprite",self._importer.return_import_animated_sprite("entities/enemies/ice_slider.png",2,2))
+
         self._global_objects.add_custom_object("chaos_boss_sprites",self._importer.return_import_animated_sprite("entities/bosses/chaos.png",3,4))
 
+        self._global_objects.add_custom_object("status_effect_freeze_16",self._importer.return_import_img("status_effects/freeze/16.png",4))
 
         self._scene_manager.add_scene(MainMenuSC(self._importer, self._assets, self._music_manager, self._global_objects))
         self._scene_manager.add_scene(CharacterSelectionSC(self._importer,self._assets,self._music_manager,self._global_objects))
