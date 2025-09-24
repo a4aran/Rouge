@@ -2,6 +2,7 @@ import window_size
 
 window_center = (window_size.width/2,window_size.height/2)
 btn_size = (240,80)
+vertical_btn_size = (80,240)
 
 entities_id_counter = 0
 

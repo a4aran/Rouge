@@ -12,6 +12,7 @@ class Game(IllusionBuiltInsPreset):
         self._global_objects.add_font("text_font","Genrik7.otf")
 
         self._global_objects.add_custom_object("btn_sprites",self._importer.return_import_animated_sprite("button.png",3,gl_var.btn_size))
+        self._global_objects.add_custom_object("vertical_btn_sprites",self._importer.return_import_animated_sprite("vertical_button.png",3,gl_var.vertical_btn_size))
         self._importer.import_img("gameplay_bg","bg/gameplay.png",2)
 
         self._importer.import_animated_sprite("boss_animation_vfx","vfx/boss_animation.png",3,3)
