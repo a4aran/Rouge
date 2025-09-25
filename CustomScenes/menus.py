@@ -1,5 +1,6 @@
 import pygame
 
+import characters
 import current_game_run_data
 import gl_var
 import window_size
@@ -68,14 +69,17 @@ class CharacterSelectionSC(Scene):
         )
         temp.add_text_to_button("character_up",text_r,">",150,(255,255,255))
 
-        self.characters = 10
+        self.characters = len(characters.characters)
         self.character_page = 0
 
         for i in range(self.characters):
             self.create_ui(f"character_{i}")
-            self.get_ui(f"character_{i}").new_text_display("test",text_r,gl_var.window_center)
-            temp = self.get_ui(f"character_{i}").get_text_display("test")
-            temp.set_all((0,0,0),70,[f"Character {i}"])
+            temp = self.get_ui(f"character_{i}")
+            temp.new_text_display("name",text_r,(gl_var.window_center[0]/2 * 3,0))
+            temp = self.get_ui(f"character_{i}").get_text_display("name")
+            temp.toggle_constant_y_pos()
+            temp.set_constant_y_pos(175)
+            temp.set_all((0,0,0),55,[characters.characters[i]["name"].capitalize()])
 
     def _update(self, frame_data: FrameData):
         self.get_ui("character_change_btn_down").should_show = self.character_page > 0

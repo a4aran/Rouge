@@ -19,7 +19,7 @@ class RunManager:
         self.last_max_health_upgrade_wave = 0
         self.add_max_hp = 0
 
-        self.selected_character = "player0"
+        self.selected_character = 0
 
         self.request_player_upgrade = False
 
@@ -54,7 +54,7 @@ class RunManager:
         self.last_max_health_upgrade_wave = 0
         self.add_max_hp = 0
         self.request_player_upgrade = False
-        self.selected_character = "player0"
+        self.selected_character = 0
 
     def get_second_lvl(self,name: str) -> list:
         return self.active_upgrades[1][name]
