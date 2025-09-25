@@ -214,6 +214,8 @@ class World:
                 else:
                     e.draw_texture(surf,self.offset,self.textures[e.texture_name + "_enemy_sprite"])
                 e.draw_effects(surf,self.status_effects_textures,self.offset)
+            else:
+                if isinstance(e,Entity): e.draw(surf,self.offset)
         for b in self.boss:
             b.draw(surf,self.offset)
         self.player.draw(surf,self.offset)
