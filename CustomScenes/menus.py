@@ -38,12 +38,7 @@ class CharacterSelectionSC(Scene):
 
         temp = self.get_ui("default")
 
-        text_r = global_objects.get_font("title_font")
-
-        temp.new_text_display("test",text_r,(gl_var.window_center[0],150))
-        temp2 = temp.get_text_display("test")
-        temp2.set_all((0,0,0),90,["Title Title"])
-
+        title_font = global_objects.get_font("title_font")
         temp_layout = window_size.width/6
 
         text_r = global_objects.get_font("text_font")
@@ -74,12 +69,62 @@ class CharacterSelectionSC(Scene):
 
         for i in range(self.characters):
             self.create_ui(f"character_{i}")
-            temp = self.get_ui(f"character_{i}")
-            temp.new_text_display("name",text_r,(gl_var.window_center[0]/2 * 3,0))
-            temp = self.get_ui(f"character_{i}").get_text_display("name")
+            x_pos = gl_var.window_center[0]/2 * 3
+            temp_ui = self.get_ui(f"character_{i}")
+
+            temp_ui.new_img("icon",global_objects.get_custom_object(f"{characters.characters[i]["name"]}_icon"),(gl_var.window_center[0]/3 * 2,gl_var.window_center[1]))
+
+            temp_ui.new_text_display("title", title_font, (gl_var.window_center[0], 80))
+            temp_ui.get_text_display("title").set_all((0, 0, 0), 90, [characters.characters[i]["name"].capitalize()])
+
+            temp_ui.new_text_display("stats_title",title_font,(x_pos,0))
+            temp = temp_ui.get_text_display("stats_title")
             temp.toggle_constant_y_pos()
-            temp.set_constant_y_pos(175)
-            temp.set_all((0,0,0),55,[characters.characters[i]["name"].capitalize()])
+            temp.set_constant_y_pos(130)
+            temp.set_all((255,255,255),55,["stats"])
+
+            temp_ui.new_text_display("stats",text_r,(x_pos,0))
+            temp = temp_ui.get_text_display("stats")
+            temp.toggle_constant_y_pos()
+            temp.set_constant_y_pos(180)
+
+            temp_dict = characters.characters[i]["base_stats"]
+
+            temp.set_all((50,50,50),30,[
+                f"Max HP: {temp_dict["max_hp"]}",
+                f"Speed: {temp_dict["speed"]}",
+                f"Damage: {temp_dict["attack_dmg"]}",
+                f"Firerate: {temp_dict["firerate"]}",
+                f"Pierce: {temp_dict["pierce"]}",
+                f"Bullet Speed: {temp_dict["b_speed"]}",
+            ])
+
+            temp_dict = characters.characters[i]["ability"]
+
+            temp_ui.new_text_display("ability_title",title_font,(x_pos,0))
+            temp = temp_ui.get_text_display("ability_title")
+            temp.toggle_constant_y_pos()
+            temp.set_constant_y_pos(380)
+            temp.set_all((255,255,255),55,[temp_dict["name"].capitalize()])
+
+            temp_ui.new_text_display("ability",text_r,(x_pos,0))
+            temp = temp_ui.get_text_display("ability")
+            temp.toggle_constant_y_pos()
+            temp.set_constant_y_pos(430)
+
+            ability_stats = []
+            if temp_dict["type"] == "activated":
+                ability_stats = [
+                    "Type: Activated",
+                    f"Cooldown: {temp_dict["cooldown"][1]}s",
+                ]
+                if "active" in temp_dict:
+                    ability_stats.append(
+                        f"Active for: {temp_dict["active"][1]}s"
+                    )
+
+            temp.set_all((50,50,50),30,ability_stats)
+
 
     def _update(self, frame_data: FrameData):
         self.get_ui("character_change_btn_down").should_show = self.character_page > 0
