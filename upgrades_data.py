@@ -13,7 +13,7 @@ lvl2 = {
     "bounce": [False, 0.2, "damage", -0.1],
     "blitz": [False, 3, "damage", -0.25],
     "particle_accelerator": [False, 0.01, "bullet_speed", -0.4],
-    "homing_b": [False, 8, "bullet_speed", -0.2]
+    "homing_b": [True, 1, "bullet_speed", -0.2]
 }
 lvl3 = {
     "shoot_on_death": [False, 1, 4],

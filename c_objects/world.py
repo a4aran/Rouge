@@ -232,7 +232,7 @@ class World:
         self.enemy_projectiles = []
 
         self.wave_on = False
-        self.wave_count = 0
+        self.wave_count = 9
 
         self.should_show_vfx = False
         self.vfx_to_show = None

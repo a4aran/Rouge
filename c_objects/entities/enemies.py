@@ -2,7 +2,6 @@ import copy
 import random
 
 import pygame
-from pygame import SRCALPHA
 
 import ar_math_helper
 import gl_var

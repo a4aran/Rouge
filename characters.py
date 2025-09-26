@@ -17,12 +17,12 @@ characters =[
         }
     },
     {
-        "name": "player0",
+        "name": "shocker",
         "ability": {
             "type": "activated",
-            "name": "dash",
+            "name": "shockwave",
             "cooldown": [0, 3, True],
-            "active": [0, 0.5, False],
+            "one_shot": True,
         },
         "base_stats": {
             "speed": 120,

@@ -67,14 +67,17 @@ class Player(Entity):
             self.b_speed = temp2["b_speed"] + temp[0]["bullet_speed"]
             self.firerate = temp2["firerate"] + temp[0]["firerate"]
             self.complete_initialize = False
+
         for lvl_2 in cur_run_data.active_upgrades[1]:
             if lvl_2 != "double_trouble":
                 if cur_run_data.active_upgrades[1][lvl_2][0]:
                     self.multipliers[cur_run_data.active_upgrades[1][lvl_2][2]] += cur_run_data.active_upgrades[1][lvl_2][3]
+
         for kind in self.multipliers:
             self.multipliers[kind] = max(0.2,self.multipliers[kind])
 
         self.on_death["shoot"] = cur_run_data.active_upgrades[2]["shoot_on_death"][0]
+
         if cur_run_data.active_upgrades[2]["lifesteal"][0]:
             if world.deleted_entities_amount > 0:
                 for i in range(world.deleted_entities_amount):
@@ -100,6 +103,7 @@ class Player(Entity):
                 if character_ability["active"][0] > character_ability["active"][1]:
                     character_ability["active"][2] = False
                     character_ability["active"][0] = 0
+
         self.update_shooting_cooldown(loc_firerate)
 
         loc_firerate = round(loc_firerate * self.multipliers["firerate"],2)
@@ -150,7 +154,7 @@ class Player(Entity):
         self.hitbox.pos += velocity
 
         if frame_data.keys[pygame.K_f] and not self.autofire_kc:
-            self.autofire = not  self.autofire
+            self.autofire = not self.autofire
 
         self.autofire_kc = frame_data.keys[pygame.K_f]
 
@@ -189,16 +193,30 @@ class Player(Entity):
             self.cooldown[2] = True
 
         if character_ability["type"] == "activated":
-            if not character_ability["cooldown"][2]:
-                character_ability["cooldown"][0] += frame_data.dt
-                if character_ability["cooldown"][0] >= character_ability["cooldown"][1]:
-                    character_ability["cooldown"][0] = 0
-                    character_ability["cooldown"][2] = True
+            if "active" in character_ability:
+                if not character_ability["active"][2]:
+                    if not character_ability["cooldown"][2]:
+                        character_ability["cooldown"][0] += frame_data.dt
+                        if character_ability["cooldown"][0] >= character_ability["cooldown"][1]:
+                            character_ability["cooldown"][0] = 0
+                            character_ability["cooldown"][2] = True
+            else:
+                if not character_ability["cooldown"][2]:
+                    character_ability["cooldown"][0] += frame_data.dt
+                    if character_ability["cooldown"][0] >= character_ability["cooldown"][1]:
+                        character_ability["cooldown"][0] = 0
+                        character_ability["cooldown"][2] = True
 
         if "active" in character_ability:
             if character_ability["cooldown"][2] and frame_data.mouse_buttons[2] and not character_ability["active"][2]:
                 character_ability["active"][2] = True
                 character_ability["cooldown"][2] = False
+
+        if "one-shot" in character_ability:
+            if character_ability["cooldown"][2] and frame_data.mouse_buttons[2]:
+                if character_ability["name"]["shockwave"]:
+                    character_ability["cooldown"][2] = False
+
 
         self.clamp_pos(world.w_size)
 

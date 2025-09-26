@@ -122,17 +122,28 @@ class HomingPP(PierceProj):
     def update(self,world: "World",frame_data: FrameData):
         if world.entities:
             if self.target != "i":
-                if self.target is not None and (self.target.id in self.damaged_entities or self.target not in world.entities): self.target = None
+                if self.target is not None and (self.target.id in self.damaged_entities or
+                    (self.target not in world.entities or self.target not in world.boss)
+                    ): self.target = None
             if self.target is None:
-                ce = world.get_closest_enemy(self.hitbox.pos)
-                if ce is not None and not ce.id in self.damaged_entities:
-                    self.target = ce
-                else:
-                    valid_targets = [e for e in world.entities if e.id not in self.damaged_entities]
-                    if valid_targets:
-                        self.target = random.choice(valid_targets)
+                target_boss = False
+                if world.boss:
+                    for b in world.boss:
+                        if not b.id in self.damaged_entities:
+                            target_boss = b
+                            break
+                if not target_boss:
+                    ce = world.get_closest_enemy(self.hitbox.pos)
+                    if ce is not None and not ce.id in self.damaged_entities:
+                        self.target = ce
                     else:
-                        self.target = "i"
+                        valid_targets = [e for e in world.entities if e.id not in self.damaged_entities]
+                        if valid_targets:
+                            self.target = random.choice(valid_targets)
+                        else:
+                            self.target = "i"
+                else:
+                    self.target = target_boss
             if self.target != "i":
                 target_angle = ar_math_helper.angle_to_target(self.hitbox.pos,self.target.hitbox.pos)
                 diff = (target_angle - self.direction + 180) % 360 - 180

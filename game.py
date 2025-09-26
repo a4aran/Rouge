@@ -15,7 +15,8 @@ class Game(IllusionBuiltInsPreset):
         self._global_objects.add_custom_object("vertical_btn_sprites",self._importer.return_import_animated_sprite("vertical_button.png",3,gl_var.vertical_btn_size))
         self._importer.import_img("gameplay_bg","bg/gameplay.png",2)
 
-        self._global_objects.add_custom_object("player0_icon",self._importer.return_import_img("placeholder.png",(320,320)))
+        self._global_objects.add_custom_object("player0_icon",self._importer.return_import_img("placeholder.png",gl_var.character_sprite_size))
+        self._global_objects.add_custom_object("shocker_icon",self._importer.return_import_img("placeholder.png",gl_var.character_sprite_size))
 
         self._importer.import_animated_sprite("boss_animation_vfx","vfx/boss_animation.png",3,3)
         self._importer.import_animated_sprite("health_indicator_hud","hud/health_indicator.png",2,4)
