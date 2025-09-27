@@ -12,6 +12,7 @@ from Illusion.go import GlobalObjects
 from Illusion.helper import c_helper
 from Illusion.ui import UI
 from ar_math_helper import formulas
+from characters import characters as chars
 
 from description_compiler import DescCompiler
 
@@ -198,6 +199,7 @@ class Upgrader:
 
     def construct_available_upgrades_list(self,add_heal:bool):
         level_1 = gl_var.level_1_upgrade_list.copy()
+        level_1.append(chars[cur_run_data.selected_character]["upgradable_stat"])
         if add_heal: level_1.append("heal")
         level_2 = []
         for kind in cur_run_data.active_upgrades[1]:

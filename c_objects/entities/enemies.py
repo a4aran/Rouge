@@ -22,9 +22,12 @@ class Enemy(Entity):
         self.atk_dmg = dmg
         self.a_atk_dmg = dmg
         self.texture_name = texture_name
+        self.knockback_amount = 0
+        self.knockback_dir = 0
 
 
     def damage(self,world: "World",amount: float,death_info: dict,effects: list = False):
+        if self.status_effects["time"]["vulnerable"][2]: amount += self.status_effects["time"]["vulnerable"][3]
         self.health -= amount
         if self.health <= 0:
             self.on_killed(death_info, world)
@@ -33,7 +36,28 @@ class Enemy(Entity):
             for ef in effects:
                 if ef[0] == "freeze":
                     self.apply_freeze(ef[1])
+                if ef[0] == "vulnerable":
+                    self.apply_vulnerable(ef[1],ef[2])
         self.trigger_flash()
+
+    def knockback(self,amount,direction):
+        self.knockback_amount = amount
+        self.knockback_dir = direction
+
+    def return_knockback(self,dt):
+        if self.knockback_amount > 0:
+            multiplied_amount = self.knockback_amount * 0.0000001
+            amount = multiplied_amount * dt
+            capped_amount = min(max(1,amount),3)
+            amount = abs(amount-capped_amount)
+            amount *= 0.0000001
+            amount += capped_amount
+            # if self.knockback_amount < 3:
+            #     amount += 3
+            self.knockback_amount -= amount
+            return pygame.Vector2(amount,0).rotate(self.knockback_dir)
+        else:
+            return None
 
     def on_killed(self, death_info: dict, world: "World"):
         if death_info is not None:
@@ -64,6 +88,12 @@ class Enemy(Entity):
         self.status_effects["time"]["freeze"][1] = time
         self.status_effects["time"]["freeze"][2] = True
 
+    def apply_vulnerable(self, time: float, strength):
+        self.status_effects["time"]["vulnerable"][0] = 0
+        self.status_effects["time"]["vulnerable"][1] = time
+        self.status_effects["time"]["vulnerable"][2] = True
+        self.status_effects["time"]["vulnerable"][3] = ar_math_helper.rng_rounding(strength)
+
     def update_status_effects(self,fd: FrameData):
         for effect in self.status_effects["time"]:
             data = self.status_effects["time"][effect]
@@ -73,6 +103,7 @@ class Enemy(Entity):
                     data[0] = 0
                     data[1] = 0
                     data[2] = False
+        if not self.status_effects["time"]["vulnerable"][2]: self.status_effects["time"]["vulnerable"][3] = 0
 
     def get_local_vars(self):
         locs = [self.speed,self.atk_dmg]
@@ -88,6 +119,8 @@ class Enemy(Entity):
 
         if self.status_effects["time"]["freeze"][2]:
             surf.blit(effects_textures["freeze"][str(texture_resolution)],pos)
+        if self.status_effects["time"]["vulnerable"][2]:
+            surf.blit(effects_textures["vulnerable"][str(texture_resolution)],pos)
 
     def draw_texture(self,surf:pygame.Surface,offset: pygame.Vector2,texture: list[pygame.Surface,pygame.Surface]):
         texture_to_use = texture[1] if self.flash_d[2] else texture[0]
@@ -112,10 +145,14 @@ class SimpleAIEnemy(Enemy):
         self.flash_countdown(frame_data.dt)
         if not self.cooldown[2] and self.direction is None:
             self.randomize_goal(world.w_size,world.boss,world.player)
-        if self.direction is not None and self.length > 0:
+        vel = pygame.Vector2(0,0)
+        kb = self.return_knockback(frame_data.dt)
+        if kb is not None:
+            vel = kb
+        elif self.direction is not None and self.length > 0:
             vel = pygame.Vector2(1,0).rotate(self.direction).normalize() * loc_speed * frame_data.dt
-            self.hitbox.pos += vel
             self.length -= vel.length()
+        self.hitbox.pos += vel
         if self.length <= 0:
             self.direction = None
             self.cooldown[2] = True
@@ -136,7 +173,6 @@ class SimpleAIEnemy(Enemy):
         if (x < 0 + radius or x > clamp_size[0] - radius or
                 y < 0 + radius or y > clamp_size[1] - radius):
             self.direction =  ar_math_helper.angle_to_target(self.hitbox.pos,player.hitbox.pos)
-            print("to player")
 
     def check_collision_with_boss(self,world: "World"):
         if world.boss:
@@ -157,6 +193,7 @@ class SimpleAIEnemy(Enemy):
             self.direction = None
             self.cooldown[0] = self.cooldown[1] * 0.5
             self.cooldown[2] = True
+            self.knockback_amount *= 0.5
         self.hitbox.pos.x = min(max(0 + radius,self.hitbox.pos.x),clamp_size[0] - radius)
         self.hitbox.pos.y = min(max(0 + radius,self.hitbox.pos.y),clamp_size[1] - radius)
 
@@ -193,10 +230,14 @@ class DoubleSAiEnemy(SimpleAIEnemy):
         self.flash_countdown(frame_data.dt)
         if not self.cooldown[2] and self.direction is None:
             self.roll_randomize_goal(world)
-        if self.direction is not None and self.length > 0:
-            vel = pygame.Vector2(1, 0).rotate(self.direction).normalize() * loc_speed * frame_data.dt
-            self.hitbox.pos += vel
+        vel = pygame.Vector2(0,0)
+        kb = self.return_knockback(frame_data.dt)
+        if kb is not None:
+            vel = kb * 0.8
+        elif self.direction is not None and self.length > 0:
+            vel = pygame.Vector2(1,0).rotate(self.direction).normalize() * loc_speed * frame_data.dt
             self.length -= vel.length()
+        self.hitbox.pos += vel
         if self.length <= 0:
             self.direction = None
             self.cooldown[2] = True

@@ -11,6 +11,7 @@ from Illusion.frame_data_f import FrameData
 from Illusion.go import GlobalObjects
 from Illusion.importer import Importer, Assets, MusicManager
 from Illusion.scene import Scene
+from c_objects.entities.bosses import Boss
 from c_objects.upgrader import Upgrader
 from c_objects.world import World
 
@@ -35,7 +36,7 @@ class GamePlaySC(Scene):
         hp_pos = (75,gl_var.window_center[1] - 200)
         fr_pos = (75,gl_var.window_center[1])
         super_diam_pos = (75,gl_var.window_center[1] + 200)
-        pi_pos = (window_size.width - 75, gl_var.window_center[1] - 200)
+        upgradable_pos = (window_size.width - 75, gl_var.window_center[1] - 200)
         dmg_pos = (window_size.width-75,gl_var.window_center[1])
         spd_pos = (window_size.width-75,gl_var.window_center[1] + 200)
         temp.new_img("hp_bg",importer.get_animated_sprite("health_indicator_hud")[0],hp_pos)
@@ -58,9 +59,9 @@ class GamePlaySC(Scene):
         temp.new_text_display("dmg_amount",global_objects.get_font("text_font"),(dmg_pos[0],dmg_pos[1]+ 20))
         temp.get_text_display("dmg_amount").set_all((255,255,255),45,"")
 
-        temp.new_img("pierce_arrow",importer.get_sprite("pierce_hud"),pi_pos)
-        temp.new_text_display("pierce_amount",global_objects.get_font("text_font"),pi_pos)
-        temp.get_text_display("pierce_amount").set_all((255,255,255),45,"")
+        temp.new_img("upgradable_icon",pygame.Surface((24*4,24*4),pygame.SRCALPHA),upgradable_pos)
+        temp.new_text_display("upgradable_amount",global_objects.get_font("text_font"),upgradable_pos)
+        temp.get_text_display("upgradable_amount").set_all((255,255,255),45,"")
 
         temp.new_img("speed_bullet",importer.get_sprite("speed_hud"),spd_pos)
         temp.new_text_display("speed_amount",global_objects.get_font("text_font"),(spd_pos[0]+7,spd_pos[1]+4))
@@ -131,7 +132,7 @@ class GamePlaySC(Scene):
         self.last_frame_max_hp = 0
         self.last_frame_fr = 0
         self.last_frame_dmg = 0
-        self.last_frame_pi = 0
+        self.last_frame_upgradable = -123456
         self.last_frame_spd = 0
         self.last_frame_boss_hp = 0
 
@@ -139,6 +140,11 @@ class GamePlaySC(Scene):
         self.upgrade_level = 0
 
         self.upgrader = Upgrader(global_objects)
+
+        self.upgradable_icons ={
+            "pierce": importer.get_sprite("pierce_hud"),
+            "armor": importer.get_sprite("armor_hud")
+        }
 
 
     def _update(self, frame_data: FrameData):
@@ -245,9 +251,20 @@ class GamePlaySC(Scene):
                 self.last_frame_dmg = temp.player.hud_dmg
                 self.get_ui("hud").get_text_display("dmg_amount").set_text([f'{self.last_frame_dmg}'])
 
-            if temp.player.pierce != self.last_frame_pi:
-                self.last_frame_pi = temp.player.pierce
-                self.get_ui("hud").get_text_display("pierce_amount").set_text([f'{self.last_frame_pi}'])
+            player_upgradable = temp.player.character["upgradable_stat"]
+            temp_hud =self.get_ui("hud")
+            if player_upgradable == "pierce":
+                if temp.player.pierce != self.last_frame_upgradable:
+                    self.last_frame_upgradable = temp.player.pierce
+                    temp_hud.get_text_display("upgradable_amount").set_text([f'{self.last_frame_upgradable}'])
+                    temp_hud.get_text_display("upgradable_amount").set_color((255,255,255))
+                    temp_hud.get_img("upgradable_icon").change_img(self.upgradable_icons["pierce"])
+            elif player_upgradable == "armor":
+                if temp.player.armor != self.last_frame_upgradable:
+                    self.last_frame_upgradable = temp.player.armor
+                    temp_hud.get_text_display("upgradable_amount").set_text([f'{self.last_frame_upgradable}'])
+                    temp_hud.get_text_display("upgradable_amount").set_color((0,0,0))
+                    temp_hud.get_img("upgradable_icon").change_img(self.upgradable_icons["armor"])
 
             if temp.player.hud_b_spd != self.last_frame_spd:
                 self.last_frame_spd = temp.player.hud_b_spd
@@ -260,7 +277,14 @@ class GamePlaySC(Scene):
                     boos_hp_display_width = 390 * (temp.combined_boss_hp / temp.combined_boss_max_hp)
                     temp_img = pygame.Surface((400, 40))
                     temp_img.fill((0, 0, 0))
-                    pygame.draw.rect(temp_img, (255, 0, 0), (5, 5, boos_hp_display_width, 30))
+                    phase = 0
+                    for b in temp.boss:
+                        if isinstance(b, Boss):
+                            phase = b.phase
+                    boss_hp_bar_color = (255,255,255)
+                    if phase == 0: boss_hp_bar_color = (255,0,0)
+                    elif phase == 1: boss_hp_bar_color = (200,0,150)
+                    pygame.draw.rect(temp_img, boss_hp_bar_color, (5, 5, boos_hp_display_width, 30))
                     self.get_ui("boss_hp").get_img("boss_hp_indicator").change_img(temp_img)
             else:
                 self.get_ui("boss_hp").should_show = False

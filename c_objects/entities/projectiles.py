@@ -23,6 +23,8 @@ class Projectile(Entity):
         self.color = (255,0,0)
         self.effects = []
         self.on_death = on_death
+        self.knockback = 0
+        self.layer = "top"
 
     def update(self,world: "World",frame_data: FrameData):
         vel = pygame.Vector2(1,0).rotate(self.direction).normalize()
@@ -41,6 +43,8 @@ class Projectile(Entity):
         from c_objects.entities.enemies import Enemy
         if isinstance(entity,Enemy):
             entity.damage(world,self.damage,self.on_death,self.effects)
+            if self.knockback != 0:
+                entity.knockback(self.knockback,ar_math_helper.angle_to_target(self.hitbox.pos,entity.hitbox.pos))
         self.damaged_entities.add(entity.id)
 
     def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
@@ -49,6 +53,52 @@ class Projectile(Entity):
         # pygame.draw.circle(surf,(255,255,255,100),offset_pos,self.hitbox.radius)
         surf.blit(temp_s,(offset_pos[0]-temp_s.get_width()/2,offset_pos[1]-temp_s.get_height()/2))
 
+# ~ Shockwave ~ #
+class Shockwave(Projectile):
+    def __init__(self,pos:pygame.Vector2,player_radius,player_armor,w_size,damage,on_death):
+        super().__init__(pos,player_radius,0,0,0,on_death)
+        self.damage_phases = [
+            damage*3*cur_run_data.shockwave_dmg_mult,
+            damage*cur_run_data.shockwave_dmg_mult*0.75
+        ]
+        self.radius_phases = [
+            int(player_radius*2.8),
+            int(player_radius*4.2),
+        ]
+        self.color_phases = [
+            (0,255,255,140),
+            (255,255,255,70),
+        ]
+        self.knockback_phases = [
+            30,
+            15
+        ]
+        self.w_size = w_size
+        self.current_phase = 0
+        self.lifespan = 0
+        self.layer = "bottom"
+        self.effects = [["vulnerable",0.7,max(1,player_armor/4)]]
+
+    def update(self,world: "World",frame_data: FrameData):
+        if self.lifespan < 0.4:
+            self.lifespan += frame_data.dt
+            self.current_phase = 0 if self.lifespan < 0.1 else 1
+            self.hitbox.radius = self.radius_phases[self.current_phase]
+            self.damage = self.damage_phases[self.current_phase]
+            self.knockback = self.knockback_phases[self.current_phase]
+        else:
+            self.should_delete = True
+
+    def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
+        temp = pygame.Surface(self.w_size,pygame.SRCALPHA)
+
+        pygame.draw.circle(temp,self.color_phases[self.current_phase],self.hitbox.pos,self.hitbox.radius)
+        pygame.draw.circle(temp,self.color_phases[self.current_phase],self.hitbox.pos,self.hitbox.radius,2)
+
+        surf.blit(temp,offset)
+
+# ~ Base Player projectile ~ #
+# i And its kinds i #
 class PierceProj(Projectile):
     def __init__(self, pos: pygame.Vector2, direction: float,dmg: float,spd: float,pierce: int,bounce_chance: float,on_death: dict):
         super().__init__(pos, 6, direction, spd,dmg,on_death)

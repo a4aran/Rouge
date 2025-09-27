@@ -53,6 +53,9 @@ class World:
         self.status_effects_textures = {
             "freeze":{
                 "16": go.get_custom_object("status_effect_freeze_16")
+            },
+            "vulnerable": {
+                "16": go.get_custom_object("status_effect_vulnerable_16")
             }
         }
 
@@ -82,7 +85,7 @@ class World:
             if self.boss:
                 for b in self.boss:
                     for p in self.projectiles:
-                        if b.entity_check_collision(p) and b.id:
+                        if b.entity_check_collision(p) and b.id not in p.damaged_entities:
                             if not (hasattr(b,"invulnerable") and b.invulnerable):
                                 p.damage_entity(b,self)
                     if b.entity_check_collision(self.player):
@@ -207,6 +210,8 @@ class World:
 
     def draw(self,surf: pygame.Surface):
         pygame.draw.rect(surf,(0,0,0),self.world_rect,2)
+        for p in self.projectiles:
+            if isinstance(p,Projectile) and p.layer == "bottom": p.draw(surf,self.offset)
         for e in self.entities:
             if isinstance(e,Enemy):
                 if e.texture_name is None:
@@ -220,7 +225,7 @@ class World:
             b.draw(surf,self.offset)
         self.player.draw(surf,self.offset)
         for p in self.projectiles:
-            if isinstance(p,Entity): p.draw(surf,self.offset)
+            if isinstance(p,Projectile) and p.layer == "top": p.draw(surf,self.offset)
         for ep in self.enemy_projectiles:
             if isinstance(ep,Entity): ep.draw(surf,self.offset)
 
@@ -232,7 +237,7 @@ class World:
         self.enemy_projectiles = []
 
         self.wave_on = False
-        self.wave_count = 0
+        self.wave_count = 19
 
         self.should_show_vfx = False
         self.vfx_to_show = None

@@ -24,6 +24,7 @@ class Game(IllusionBuiltInsPreset):
         self._importer.import_animated_sprite("firerate_indicator_hud","hud/firerate_indicator.png",2,4)
         self._importer.import_img("damage_hud","hud/damage_drop.png",4)
         self._importer.import_img("pierce_hud","hud/pierce_arrow.png",4)
+        self._importer.import_img("armor_hud","hud/armor_shield.png",4)
         self._importer.import_img("speed_hud","hud/speed_bullet.png",4)
 
         self._global_objects.add_custom_object("heart_up",self._importer.return_import_animated_sprite("upgrades/heal.png",2,4))
@@ -37,6 +38,7 @@ class Game(IllusionBuiltInsPreset):
         self._global_objects.add_custom_object("chaos_boss_sprites",self._importer.return_import_animated_sprite("entities/bosses/chaos.png",3,4))
 
         self._global_objects.add_custom_object("status_effect_freeze_16",self._importer.return_import_img("status_effects/freeze/16.png",4))
+        self._global_objects.add_custom_object("status_effect_vulnerable_16",self._importer.return_import_img("status_effects/vulnerable/16.png",4))
 
         self._scene_manager.add_scene(MainMenuSC(self._importer, self._assets, self._music_manager, self._global_objects))
         self._scene_manager.add_scene(CharacterSelectionSC(self._importer,self._assets,self._music_manager,self._global_objects))

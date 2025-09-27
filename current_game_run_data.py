@@ -15,11 +15,12 @@ class RunManager:
         ]
 
         self.lifesteal_amount = 1
+        self.shockwave_dmg_mult = 1
         self.heal_q = 0
         self.last_max_health_upgrade_wave = 0
         self.add_max_hp = 0
 
-        self.selected_character = 0
+        self.selected_character = 1
 
         self.request_player_upgrade = False
 

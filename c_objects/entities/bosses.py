@@ -23,6 +23,19 @@ class Boss(Enemy):
         self.max_hp = max(hp * self.difficulty_mult * additional_hp_mult,hp)
         self.health = self.max_hp
         self.invulnerable = False
+        self.phase = 0
+        self.phases = 1
+        self.phases_goals = []
+
+    def update_phase(self):
+        if self.phases > 1:
+            num = 0
+            for i in self.phases_goals:
+                if self.health < i * self.max_hp:
+                    self.phase = num + 1
+                num += 1
+        else:
+            return
 
 # - Crowd Master Boss - #
 class CrowdMaster(Boss):
@@ -126,13 +139,16 @@ class Chaos(Boss):
         self.can_touch_damage= True
         self.color = (100,100,130)
         self.shoot_cooldown = [0,0.3]
-        self.phase = self.get_phase()
         self.texture = texture
+        self.phases = 2
+        self.phase = 0
+        self.phases_goals = [0.3]
 
     def update(self,world: "World",frame_data: FrameData):
         self.flash_countdown(frame_data.dt)
-        self.phase = self.get_phase()
-        self.shoot_cooldown[1] = 0.25 if self.phase == 1 else 0.15
+        self.update_phase()
+        phase = self.phase + 1
+        self.shoot_cooldown[1] = 0.25 if phase == 1 else 0.15
         if not self.touch_dmg_cooldown[2]:
             self.touch_dmg_cooldown[0] += frame_data.dt
             if self.touch_dmg_cooldown[0] > self.touch_dmg_cooldown[1]:
@@ -197,23 +213,17 @@ class Chaos(Boss):
         angle = random.choice(r_ang) if r_ang else None
         if angle is None: return
         fire_cone = 15
-        ang = (angle + random.randint(ar_math.rng_rounding(-fire_cone / self.phase),ar_math.rng_rounding(fire_cone / self.phase)))%360 \
+        ang = (angle + random.randint(ar_math.rng_rounding(-fire_cone / (self.phase + 1)),ar_math.rng_rounding(fire_cone / (self.phase+1))))%360 \
             if random.random() < 0.7 else (
                 (ar_math.angle_to_target(self.hitbox.pos,world.player.hitbox.pos) + random.randint(ar_math.rng_rounding(-fire_cone*1.5),ar_math.rng_rounding(-fire_cone*1.5)))%360)
         pos = self.hitbox.pos + pygame.Vector2(self.hitbox.radius + 7, 0).rotate(ang)
-        if self.phase == 1:
+        if self.phase + 1 == 1:
             world.enemy_projectiles.append(EnemyProj(pos,ang,200,2))
         else:
             if random.random() < 0.3:
                 world.entities.append(SpawnProjectile(pos,ang,random.randint(200,600),["faster"],[1],250))
             else:
                 world.enemy_projectiles.append(EnemyProj(pos,ang,200,2))
-
-    def get_phase(self):
-        if self.health != 0 and (self.health / self.max_hp) < 0.3:
-            return 2
-        else:
-            return 1
 
     def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
         temp = pygame.Surface((128,128),pygame.SRCALPHA)

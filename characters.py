@@ -13,24 +13,28 @@ characters =[
             "max_hp": 100,
             "attack_dmg": 10,
             "pierce": 1,
-            "b_speed": 170
-        }
+            "b_speed": 170,
+            "armor": 0
+        },
+        "upgradable_stats": "pierce"
     },
     {
         "name": "shocker",
         "ability": {
             "type": "activated",
             "name": "shockwave",
-            "cooldown": [0, 3, True],
+            "cooldown": [0, 0.9, True],
             "one_shot": True,
         },
         "base_stats": {
-            "speed": 120,
-            "firerate": 1,
-            "max_hp": 100,
-            "attack_dmg": 10,
+            "speed": 160,
+            "firerate": 5,
+            "max_hp": 200,
+            "attack_dmg": 40,
             "pierce": 1,
-            "b_speed": 170
-        }
+            "b_speed": 300,
+            "armor": 4
+        },
+        "upgradable_stat": "armor"
     }
 ]

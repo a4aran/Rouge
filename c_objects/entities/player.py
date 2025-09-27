@@ -10,7 +10,7 @@ from current_game_run_data import cur_run_data
 from Illusion.frame_data_f import FrameData
 from ar_math_helper import angle_to_mouse
 from c_objects.entities.entity import Entity
-from c_objects.entities.projectiles import PierceProj, FreezePP, HomingPP
+from c_objects.entities.projectiles import PierceProj, FreezePP, HomingPP, Shockwave
 from typing import TYPE_CHECKING
 from characters import characters
 if TYPE_CHECKING:
@@ -30,6 +30,7 @@ class Player(Entity):
         self.attack_damage = 10
         self.pierce = 1
         self.b_speed = 170
+        self.armor = 0
 
         self.bullet_counter = 0
 
@@ -51,6 +52,7 @@ class Player(Entity):
         self.complete_initialize = False
 
         self.save = None
+        self.base_super_cooldown = 0
 
     def update(self,world: "World",frame_data: FrameData):
         if self.character is None: self.initialize()
@@ -66,6 +68,7 @@ class Player(Entity):
             self.pierce = temp2["pierce"] + temp[0]["pierce"]
             self.b_speed = temp2["b_speed"] + temp[0]["bullet_speed"]
             self.firerate = temp2["firerate"] + temp[0]["firerate"]
+            self.armor = temp2["armor"] + temp[0]["armor"]
             self.complete_initialize = False
 
         for lvl_2 in cur_run_data.active_upgrades[1]:
@@ -192,6 +195,9 @@ class Player(Entity):
                 self.shoot(world, wish_type, ang, loc_dmg, loc_b_spd)
             self.cooldown[2] = True
 
+        if self.character["name"] == "shocker":
+            character_ability["cooldown"][1] = self.base_super_cooldown/loc_firerate
+
         if character_ability["type"] == "activated":
             if "active" in character_ability:
                 if not character_ability["active"][2]:
@@ -202,20 +208,24 @@ class Player(Entity):
                             character_ability["cooldown"][2] = True
             else:
                 if not character_ability["cooldown"][2]:
-                    character_ability["cooldown"][0] += frame_data.dt
-                    if character_ability["cooldown"][0] >= character_ability["cooldown"][1]:
-                        character_ability["cooldown"][0] = 0
-                        character_ability["cooldown"][2] = True
+                    if self.character["name"] == "shocker":
+                        character_ability["cooldown"][0] += frame_data.dt
+                        if character_ability["cooldown"][0] >= character_ability["cooldown"][1]:
+                            print(character_ability["cooldown"][1]/loc_firerate)
+                            character_ability["cooldown"][0] = 0
+                            character_ability["cooldown"][2] = True
 
         if "active" in character_ability:
             if character_ability["cooldown"][2] and frame_data.mouse_buttons[2] and not character_ability["active"][2]:
                 character_ability["active"][2] = True
                 character_ability["cooldown"][2] = False
 
-        if "one-shot" in character_ability:
+        if "one_shot" in character_ability:
             if character_ability["cooldown"][2] and frame_data.mouse_buttons[2]:
-                if character_ability["name"]["shockwave"]:
+                if character_ability["name"] == "shockwave":
+                    character_ability["cooldown"][0] = 0
                     character_ability["cooldown"][2] = False
+                    world.projectiles.append(Shockwave(self.hitbox.pos.copy(),self.hitbox.radius,self.armor,world.w_size,loc_dmg,self.on_death))
 
 
         self.clamp_pos(world.w_size)
@@ -276,7 +286,7 @@ class Player(Entity):
     def damage(self,damager: Entity,amount: int):
         if hasattr(damager,"damage_on_touch"):
             damager.should_delete = True
-        self.health -= amount
+        self.health -= max(1,amount - ar_math_helper.rng_rounding(self.armor*0.5))
 
     def reset(self):
         self.attack_damage = 10
@@ -301,6 +311,7 @@ class Player(Entity):
 
     def initialize(self):
         self.character = copy.deepcopy(characters[cur_run_data.selected_character])
+        self.base_super_cooldown = self.character["ability"]["cooldown"][1]
         self.health = self.character["base_stats"]["max_hp"]
         if self.save is not None:
             self.max_health = self.save["player_max_hp"]

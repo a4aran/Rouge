@@ -19,6 +19,10 @@
         "heal": {
             "title": "Heal",
             "description": "Heals you @1\n*Can not overflow max HP*"
+        },
+        "armor": {
+            "title": "Armor Upgrade",
+            "description": "Increases your armor by @1\nArmor lowers damage taken\n by 0.5 for each point*\n-Rounded with RNG-"
         }
     },
     "2": {

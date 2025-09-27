@@ -11,7 +11,8 @@ entities_id_counter = 0
 
 status_effect = {
     "time":{
-        "freeze": [0,0,False]
+        "freeze": [0,0,False],
+        "vulnerable": [0,0,False,0]
     },
 }
 
@@ -19,6 +20,6 @@ on_death = {
     "shoot": True
 }
 
-level_1_upgrade_list = ["damage","pierce","bullet_speed","firerate"]
+level_1_upgrade_list = ["damage","bullet_speed","firerate"]
 level_2_upgrade_list = ["freezing_b","triple_shot","double_trouble","bounce"]
 level_3_upgrade_list = ["shoot_on_death"]

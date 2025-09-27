@@ -5,6 +5,7 @@ lvl1 = {
     "pierce": 0,
     "bullet_speed": 0,
     "firerate": 0,
+    "armor": 0
 }
 lvl2 = {
     "freezing_b": [False, 10, "firerate", -0.1],
@@ -30,6 +31,7 @@ lvl4 = {
 lvl1_stats = {
     "damage": lambda data, wave, context, extra: [formulas.damage_upgrade(wave)],
     "pierce": lambda data, wave, context, extra: [1],
+    "armor": lambda data, wave, context, extra: [1],
     "bullet_speed": lambda data, wave, context, extra: [formulas.b_speed_upgrade(wave)],
     "firerate": lambda data, wave, context, extra: [formulas.firerate_upgrade(wave)],
     "heal": lambda data, wave, contextm, extra: [data[0]]
