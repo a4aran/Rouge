@@ -28,11 +28,11 @@ characters =[
         },
         "base_stats": {
             "speed": 160,
-            "firerate": 5,
+            "firerate": 0.5,
             "max_hp": 200,
-            "attack_dmg": 40,
+            "attack_dmg": 10,
             "pierce": 1,
-            "b_speed": 300,
+            "b_speed": 100,
             "armor": 4
         },
         "upgradable_stat": "armor"
