@@ -16,7 +16,7 @@ characters =[
             "b_speed": 170,
             "armor": 0
         },
-        "upgradable_stats": "pierce"
+        "upgradable_stat": "pierce"
     },
     {
         "name": "shocker",

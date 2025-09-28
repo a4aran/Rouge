@@ -8,6 +8,8 @@ class Game(IllusionBuiltInsPreset):
     def __init__(self,hws):
         super().__init__(hws)
 
+        self._global_objects.font_prefix = "./assets/fonts/"
+
         self._global_objects.add_font("title_font","Chonk.otf")
         self._global_objects.add_font("text_font","Genrik7.otf")
 
@@ -19,8 +21,11 @@ class Game(IllusionBuiltInsPreset):
         self._global_objects.add_custom_object("shocker_icon",self._importer.return_import_img("placeholder.png",gl_var.character_sprite_size))
 
         self._importer.import_animated_sprite("boss_animation_vfx","vfx/boss_animation.png",3,3)
+
         self._importer.import_animated_sprite("health_indicator_hud","hud/health_indicator.png",2,4)
-        self._importer.import_animated_sprite("super_indicator_hud","hud/super_indicator.png",3,4)
+
+        self._importer.import_animated_sprite("super_indicator_hud","hud/super_indicator.png",4,4)
+
         self._importer.import_animated_sprite("firerate_indicator_hud","hud/firerate_indicator.png",2,4)
         self._importer.import_img("damage_hud","hud/damage_drop.png",4)
         self._importer.import_img("pierce_hud","hud/pierce_arrow.png",4)

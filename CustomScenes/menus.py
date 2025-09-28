@@ -4,6 +4,7 @@ import characters
 import current_game_run_data
 import gl_var
 import window_size
+from Illusion import helper
 from Illusion.frame_data_f import FrameData
 from Illusion.go import GlobalObjects
 from Illusion.helper import c_helper
@@ -42,10 +43,10 @@ class CharacterSelectionSC(Scene):
         temp_layout = window_size.width/6
 
         text_r = global_objects.get_font("text_font")
-        temp.new_scene_change_button("new_game_btn",(temp_layout*2,window_size.height-100),gl_var.btn_size,global_objects.get_custom_object("btn_sprites"),3,delay=0.1)
-        temp2 = temp.add_text_to_button("new_game_btn",text_r,"New Game",50,(255,255,255))
+        temp.add_custom_button(NewSaveBTN("new_save_btn",(temp_layout*2,window_size.height-100),gl_var.btn_size,global_objects.get_custom_object("btn_sprites"),delay=0.1))
+        temp.add_text_to_button("new_save_btn",text_r,"New Game",50,(255,255,255))
         temp.add_custom_button(LoadSaveBTN("load_save_btn",(temp_layout*4,window_size.height-100),gl_var.btn_size,global_objects.get_custom_object("btn_sprites"),3,delay=0.1))
-        temp2 = temp.add_text_to_button("load_save_btn",text_r,"Load Save",50,(255,255,255))
+        temp.add_text_to_button("load_save_btn",text_r,"Load Save",50,(255,255,255))
         ui_data = temp.data()
         self.create_ui("character_change_btn_down")
         temp = self.get_ui("character_change_btn_down")
@@ -68,62 +69,53 @@ class CharacterSelectionSC(Scene):
         self.character_page = 0
 
         for i in range(self.characters):
+            font_dict = {
+                "def": text_r,
+                "title": title_font
+            }
+
             self.create_ui(f"character_{i}")
-            x_pos = gl_var.window_center[0]/2 * 3
+            x_pos = gl_var.window_center[0]/2 * 3 - 40
             temp_ui = self.get_ui(f"character_{i}")
 
             temp_ui.new_img("icon",global_objects.get_custom_object(f"{characters.characters[i]["name"]}_icon"),(gl_var.window_center[0]/3 * 2,gl_var.window_center[1]))
 
-            temp_ui.new_text_display("title", title_font, (gl_var.window_center[0], 80))
-            temp_ui.get_text_display("title").set_all((0, 0, 0), 90, [characters.characters[i]["name"].capitalize()])
+            capitalized_name = characters.characters[i]["name"].capitalize()
+            title_size = 90 if len(capitalized_name) < 15 else 70
 
-            temp_ui.new_text_display("stats_title",title_font,(x_pos,0))
-            temp = temp_ui.get_text_display("stats_title")
+            temp_ui.new_text_display("title", title_font, (gl_var.window_center[0], 80))
+            temp_ui.get_text_display("title").set_all((0, 0, 0), title_size, [capitalized_name])
+
+            temp_ui.new_formatted_text_display("stats",font_dict,(x_pos,0))
+            temp = temp_ui.get_formatted_text_display("stats")
             temp.toggle_constant_y_pos()
             temp.set_constant_y_pos(130)
-            temp.set_all((255,255,255),55,["stats"])
-
-            temp_ui.new_text_display("stats",text_r,(x_pos,0))
-            temp = temp_ui.get_text_display("stats")
-            temp.toggle_constant_y_pos()
-            temp.set_constant_y_pos(180)
-
-            temp_dict = characters.characters[i]["base_stats"]
-
-            temp.set_all((50,50,50),30,[
-                f"Max HP: {temp_dict["max_hp"]}",
-                f"Speed: {temp_dict["speed"]}",
-                f"Damage: {temp_dict["attack_dmg"]}",
-                f"Firerate: {temp_dict["firerate"]}",
-                f"Pierce: {temp_dict["pierce"]}",
-                f"Bullet Speed: {temp_dict["b_speed"]}",
-            ])
-
-            temp_dict = characters.characters[i]["ability"]
-
-            temp_ui.new_text_display("ability_title",title_font,(x_pos,0))
-            temp = temp_ui.get_text_display("ability_title")
-            temp.toggle_constant_y_pos()
-            temp.set_constant_y_pos(380)
-            temp.set_all((255,255,255),55,[temp_dict["name"].capitalize()])
-
-            temp_ui.new_text_display("ability",text_r,(x_pos,0))
-            temp = temp_ui.get_text_display("ability")
-            temp.toggle_constant_y_pos()
-            temp.set_constant_y_pos(430)
-
-            ability_stats = []
-            if temp_dict["type"] == "activated":
-                ability_stats = [
-                    "Type: Activated",
-                    f"Cooldown: {temp_dict["cooldown"][1]}s",
-                ]
-                if "active" in temp_dict:
-                    ability_stats.append(
-                        f"Active for: {temp_dict["active"][1]}s"
+            temp_stats_dict = characters.characters[i]["base_stats"]
+            temp_ability_dict = characters.characters[i]["ability"]
+            deafult_formatting = "{s:30;c:(50,50,50);f:def}"
+            ability_name_size = 55 - (max(len(temp_ability_dict["name"])-5,0))*6
+            text_list = [
+                f"{{s:55;c:(255,255,255);f:title}}STATS",
+                f"{deafult_formatting}Max HP: {temp_stats_dict['max_hp']}",
+                f"Speed: {temp_stats_dict['speed']}",
+                f"Damage: {temp_stats_dict['attack_dmg']}",
+                f"Firerate: {temp_stats_dict['firerate']}",
+                f"Pierce: {temp_stats_dict['pierce']}",
+                helper.to_format_string((50,50,50),25,"def",f"Bullet Speed: {temp_stats_dict['b_speed']}"),
+                f" ",
+                "{{s:15;c:(0,0,0);f:def}}ABILITY",
+                f"{{s:{ability_name_size};c:(255,255,255);f:title}}{temp_ability_dict['name'].upper()}"
+            ]
+            if temp_ability_dict["type"] == "activated":
+                text_list.append(f"{deafult_formatting}Type: Activated")
+                text_list.append(f"Cooldown: {temp_ability_dict['cooldown'][1]}s")
+                if "active" in temp_ability_dict:
+                    text_list.append(
+                        f"Active for: {temp_ability_dict['active'][1]}s"
                     )
-
-            temp.set_all((50,50,50),30,ability_stats)
+            text_list.append(f" ")
+            text_list.append(f" ")
+            temp.set_text(text_list)
 
 
     def _update(self, frame_data: FrameData):
@@ -151,6 +143,11 @@ class CharacterSelectionSC(Scene):
             else:
                 self.get_ui(f"character_{i}").should_show = False
 
+        if "global_character_change" in self.get_ui("default").data() and self.get_ui("default").data()["global_character_change"]:
+            self.get_ui("default").data().pop("global_character_change")
+            current_game_run_data.cur_run_data.selected_character = self.character_page
+            self.edit_change_scene_data(True,3)
+
         super()._update(frame_data)
 
 class ChangeCharacterBTN(c_helper.button_base()):
@@ -177,6 +174,14 @@ class LoadSaveBTN(c_helper.button_base()):
             data["scene_to_change_to"] = self.scene
         current_game_run_data.cur_run_data.should_load_save = True
 
+class NewSaveBTN(c_helper.button_base()):
+    def __init__(self, identifier: str, center_pos: pygame.Vector2, rect_size: tuple[float, float],
+                 animated_sprite: list, sound: pygame.mixer.Sound = [None,None], delay=None):
+        super().__init__(identifier, center_pos, rect_size, animated_sprite, sound, delay)
+
+    def on_click(self, data: dict):
+        super().on_click(data)
+        data["global_character_change"] = True
 
 class RunOverSC(Scene):
     def __init__(self, importer: Importer, assets: Assets, music_manager: MusicManager, global_objects: GlobalObjects):

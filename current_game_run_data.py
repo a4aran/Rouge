@@ -1,6 +1,8 @@
 import ast
 import random
 from typing import TYPE_CHECKING
+
+import characters
 import upgrades_data as u_data
 if TYPE_CHECKING:
     from c_objects.world import World
@@ -94,6 +96,7 @@ class RunManager:
                 ctx[k] = v
         ctx["chance_mult"] = self.chance_mult()
         ctx["lifesteal_amount"] = self.lifesteal_amount
+        ctx["character_name"] = characters.characters[self.selected_character]["name"]
         return ctx
 
     def load_save(self,save_data):

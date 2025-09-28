@@ -30,7 +30,7 @@ class Scene:
             if temp.should_show:
                 temp.update(frame_data)
 
-    def _draw(self,surface: pygame.Surface): #unprivate
+    def _draw(self,surface: pygame.Surface):
         for bg in self._bg_uis:
             temp = self.get_ui(bg)
             if temp.should_show:

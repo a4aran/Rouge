@@ -77,26 +77,40 @@ class FormulaProvider:
         pass
 
     @staticmethod
-    def damage_upgrade(wave):
-        temp = max(2,round(wave*0.425 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave)))
-        if wave > 50:
-            temp = max(2, round(0.125 * wave * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave)))
+    def damage_upgrade(wave,character_name):
+        temp = 1
+        if character_name == "player0":
+            temp = max(2,round(wave*0.425 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave)))
+            if wave > 50:
+                temp = max(2, round(0.125 * wave * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave)))
+        elif character_name == "shocker":
+            temp = min(max(4,rng_rounding(wave/8 * FormulaProvider._mult_modifier(wave))),10)
         return temp
 
     @staticmethod
-    def b_speed_upgrade(wave):
-        temp = min(max(20,round(2.2*wave*0.6 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave))),50)
-        if wave > 20:
-            temp = min(max(30,round(1.9*wave*0.6 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave))),50)
+    def b_speed_upgrade(wave,character_name):
+        temp = 1
+        if character_name == "player0" or character_name == "shocker":
+            temp = min(max(20,round(2.2*wave*0.6 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave))),50)
+            if wave > 20:
+                temp = min(max(30,round(1.9*wave*0.6 * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave))),50)
         return temp
 
     @staticmethod
-    def firerate_upgrade(wave):
-        temp = max(0.15,round((0.035 * wave*0.5) * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave),2))
-        if wave > 50:
-            temp = max(0.3,round((0.015 * wave*0.5) * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave),2))
-        elif wave > 30:
-            temp = max(0.3,round((0.03 * wave*0.5) * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave),2))
+    def firerate_upgrade(wave,character_name):
+        temp = 1
+        if character_name == "player0":
+            temp = max(0.15,round((0.035 * wave*0.5) * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave),2))
+            if wave > 50:
+                temp = max(0.3,round((0.015 * wave*0.5) * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave),2))
+            elif wave > 30:
+                temp = max(0.3,round((0.03 * wave*0.5) * FormulaProvider.random_mult() * FormulaProvider._mult_modifier(wave),2))
+        elif character_name == "shocker":
+            temp = max(0.08,round(0.03+wave/200* FormulaProvider._mult_modifier(wave),2))
+            if wave > 25:
+                temp -= round(min(round((wave-20)/50000,2) -0.005,0.04),2)
+                temp = round(temp,2)
+            temp = min(temp,0.3)
         return temp
 
     @staticmethod

@@ -56,30 +56,10 @@ class Player(Entity):
 
     def update(self,world: "World",frame_data: FrameData):
         if self.character is None: self.initialize()
-        self.multipliers = {
-            "firerate": 1,
-            "damage": 1,
-            "bullet_speed": 1
-        }
-        if cur_run_data.request_player_upgrade or self.complete_initialize:
-            temp = cur_run_data.active_upgrades
-            temp2 = self.character["base_stats"]
-            self.attack_damage = temp2["attack_dmg"] + temp[0]["damage"]
-            self.pierce = temp2["pierce"] + temp[0]["pierce"]
-            self.b_speed = temp2["b_speed"] + temp[0]["bullet_speed"]
-            self.firerate = temp2["firerate"] + temp[0]["firerate"]
-            self.armor = temp2["armor"] + temp[0]["armor"]
-            self.complete_initialize = False
 
-        for lvl_2 in cur_run_data.active_upgrades[1]:
-            if lvl_2 != "double_trouble":
-                if cur_run_data.active_upgrades[1][lvl_2][0]:
-                    self.multipliers[cur_run_data.active_upgrades[1][lvl_2][2]] += cur_run_data.active_upgrades[1][lvl_2][3]
+        self._update_stats_and_multipliers()
 
-        for kind in self.multipliers:
-            self.multipliers[kind] = max(0.2,self.multipliers[kind])
-
-        self.on_death["shoot"] = cur_run_data.active_upgrades[2]["shoot_on_death"][0]
+        self._compile_on_death_dict()
 
         if cur_run_data.active_upgrades[2]["lifesteal"][0]:
             if world.deleted_entities_amount > 0:
@@ -87,13 +67,9 @@ class Player(Entity):
                     if cur_run_data.get_random_chance(cur_run_data.active_upgrades[2]["lifesteal"][1]):
                         cur_run_data.heal_q += 1
 
-        if cur_run_data.heal_q != 0:
-            self.health += cur_run_data.heal_q
-            self.health = min(self.max_health,self.health)
-            cur_run_data.heal_q = 0
+        self._update_health_and_max_hp()
 
-        self.max_health = self.character["base_stats"]["max_hp"] + cur_run_data.add_max_hp
-
+        # ~ Local Variables ~ #
         loc_speed = self.character["base_stats"]["speed"]
         loc_firerate = self.firerate
         character_ability = self.character["ability"]
@@ -125,36 +101,7 @@ class Player(Entity):
         self.hud_dmg = round(loc_dmg)
         self.hud_b_spd = round(loc_b_spd)
 
-        direction = pygame.Vector2(0, 0)
-
-        if frame_data.keys[pygame.K_w]:
-            direction.y -= 1
-        if frame_data.keys[pygame.K_s]:
-            direction.y += 1
-        if frame_data.keys[pygame.K_a]:
-            direction.x -= 1
-        if frame_data.keys[pygame.K_d]:
-            direction.x += 1
-
-        if direction.length_squared() > 0:
-            direction = direction.normalize()
-
-        velocity = direction * loc_speed * frame_data.dt
-
-        temp_circle = self.hitbox.copy()
-        temp_circle.pos += velocity
-        for e in world.entities:
-            if isinstance(e,enemies.Enemy) and not (hasattr(e,"damage_on_touch") and e.damage_on_touch) and temp_circle.circle_collision(e.hitbox):
-                e_dir_to_p = ar_math_helper.angle_to_target(e.hitbox.pos,self.hitbox.pos)
-                intersection_length = self.hitbox.intersection_length_with_other(e.hitbox)
-                velocity += pygame.Vector2(intersection_length,0).rotate(e_dir_to_p)
-        for b in world.boss:
-            if isinstance(b, enemies.Enemy) and (hasattr(b,"has_collision") and b.has_collision) and temp_circle.circle_collision(b.hitbox):
-                b_dir_to_p = ar_math_helper.angle_to_target(b.hitbox.pos,self.hitbox.pos)
-                intersection_length = self.hitbox.intersection_length_with_other(b.hitbox)
-                velocity += pygame.Vector2(intersection_length,0).rotate(b_dir_to_p)
-
-        self.hitbox.pos += velocity
+        self._move(frame_data,loc_speed,world)
 
         if frame_data.keys[pygame.K_f] and not self.autofire_kc:
             self.autofire = not self.autofire
@@ -168,32 +115,7 @@ class Player(Entity):
                 self.cooldown[2] = False
 
         if (frame_data.mouse_buttons[0] or self.autofire) and not self.cooldown[2]:
-            angles = [angle_to_mouse(self.hitbox.pos + world.offset)]
-            data = cur_run_data.get_second_lvl("triple_shot")
-            if data[0]:
-                if cur_run_data.get_random_chance(data[1]):
-                    angles.append((angles[0] + 30) % 360)
-                    angles.append((angles[0] + 330) % 360)
-            self.bullet_counter += 1
-
-            freezing_b = cur_run_data.get_second_lvl("freezing_b")
-            homing_b = cur_run_data.get_second_lvl("homing_b")
-
-            if self.queued_projectile is None:
-                wish_type = "normal"
-                if homing_b[0] and self.bullet_counter % homing_b[1] == 0: wish_type = "homing"
-                if freezing_b[0] and self.bullet_counter % freezing_b[1] == 0:
-                    if wish_type == "homing":
-                        self.queued_projectile = "freeze"
-                    else:
-                        wish_type = "freeze"
-            else:
-                wish_type = self.queued_projectile
-                self.queued_projectile = None
-
-            for ang in angles:
-                self.shoot(world, wish_type, ang, loc_dmg, loc_b_spd)
-            self.cooldown[2] = True
+            self._prepare_shot(world, loc_dmg, loc_b_spd)
 
         if self.character["name"] == "shocker":
             character_ability["cooldown"][1] = self.base_super_cooldown/loc_firerate
@@ -229,6 +151,102 @@ class Player(Entity):
 
 
         self.clamp_pos(world.w_size)
+
+    def _move(self,frame_data,loc_speed,world):
+        direction = pygame.Vector2(0, 0)
+
+        if frame_data.keys[pygame.K_w]:
+            direction.y -= 1
+        if frame_data.keys[pygame.K_s]:
+            direction.y += 1
+        if frame_data.keys[pygame.K_a]:
+            direction.x -= 1
+        if frame_data.keys[pygame.K_d]:
+            direction.x += 1
+
+        if direction.length_squared() > 0:
+            direction = direction.normalize()
+
+        velocity = direction * loc_speed * frame_data.dt
+
+        temp_circle = self.hitbox.copy()
+        temp_circle.pos += velocity
+        for e in world.entities:
+            if isinstance(e,enemies.Enemy) and not (hasattr(e,"damage_on_touch") and e.damage_on_touch) and temp_circle.circle_collision(e.hitbox):
+                e_dir_to_p = ar_math_helper.angle_to_target(e.hitbox.pos,self.hitbox.pos)
+                intersection_length = self.hitbox.intersection_length_with_other(e.hitbox)
+                velocity += pygame.Vector2(intersection_length,0).rotate(e_dir_to_p)
+        for b in world.boss:
+            if isinstance(b, enemies.Enemy) and (hasattr(b,"has_collision") and b.has_collision) and temp_circle.circle_collision(b.hitbox):
+                b_dir_to_p = ar_math_helper.angle_to_target(b.hitbox.pos,self.hitbox.pos)
+                intersection_length = self.hitbox.intersection_length_with_other(b.hitbox)
+                velocity += pygame.Vector2(intersection_length,0).rotate(b_dir_to_p)
+
+        self.hitbox.pos += velocity
+
+    def _compile_on_death_dict(self):
+        self.on_death["shoot"] = cur_run_data.active_upgrades[2]["shoot_on_death"][0]
+
+    def _update_stats_and_multipliers(self):
+        self.multipliers = {
+            "firerate": 1,
+            "damage": 1,
+            "bullet_speed": 1
+        }
+        if cur_run_data.request_player_upgrade or self.complete_initialize:
+            temp = cur_run_data.active_upgrades
+            temp2 = self.character["base_stats"]
+            self.attack_damage = temp2["attack_dmg"] + temp[0]["damage"]
+            self.pierce = temp2["pierce"] + temp[0]["pierce"]
+            self.b_speed = temp2["b_speed"] + temp[0]["bullet_speed"]
+            self.firerate = temp2["firerate"] + temp[0]["firerate"]
+            self.armor = temp2["armor"] + temp[0]["armor"]
+            self.complete_initialize = False
+
+        for lvl_2 in cur_run_data.active_upgrades[1]:
+            if lvl_2 != "double_trouble":
+                if cur_run_data.active_upgrades[1][lvl_2][0]:
+                    self.multipliers[cur_run_data.active_upgrades[1][lvl_2][2]] += \
+                    cur_run_data.active_upgrades[1][lvl_2][3]
+
+        for kind in self.multipliers:
+            self.multipliers[kind] = max(0.2, self.multipliers[kind])
+
+    def _update_health_and_max_hp(self):
+        if cur_run_data.heal_q != 0:
+            self.health += cur_run_data.heal_q
+            self.health = min(self.max_health,self.health)
+            cur_run_data.heal_q = 0
+
+        self.max_health = self.character["base_stats"]["max_hp"] + cur_run_data.add_max_hp
+
+    def _prepare_shot(self, world, loc_dmg, loc_b_spd):
+        angles = [angle_to_mouse(self.hitbox.pos + world.offset)]
+        data = cur_run_data.get_second_lvl("triple_shot")
+        if data[0]:
+            if cur_run_data.get_random_chance(data[1]):
+                angles.append((angles[0] + 30) % 360)
+                angles.append((angles[0] + 330) % 360)
+        self.bullet_counter += 1
+
+        freezing_b = cur_run_data.get_second_lvl("freezing_b")
+        homing_b = cur_run_data.get_second_lvl("homing_b")
+
+        if self.queued_projectile is None:
+            wish_type = "normal"
+            if homing_b[0] and self.bullet_counter % homing_b[1] == 0: wish_type = "homing"
+            if freezing_b[0] and self.bullet_counter % freezing_b[1] == 0:
+                if wish_type == "homing":
+                    self.queued_projectile = "freeze"
+                else:
+                    wish_type = "freeze"
+        else:
+            wish_type = self.queued_projectile
+            self.queued_projectile = None
+
+        for ang in angles:
+            self.shoot(world, wish_type, ang, loc_dmg, loc_b_spd)
+        self.cooldown[2] = True
 
     def shoot(self,world: "World",type: str,angle,dmg: float, b_spd: float):
         bc = 0
@@ -305,7 +323,8 @@ class Player(Entity):
 
         if self.character is not None:
             if self.character["ability"]["type"] == "activated":
-                self.character["ability"]["cooldown"] = characters[cur_run_data.selected_character]["ability"]["cooldown"]
+                self.character["ability"]["cooldown"][0] = 0
+                self.character["ability"]["cooldown"][2] = True
                 if "active" in self.character["ability"]:
                     self.character["ability"]["active"] = characters[cur_run_data.selected_character]["ability"]["active"]
 
@@ -317,3 +336,4 @@ class Player(Entity):
             self.max_health = self.save["player_max_hp"]
             self.health = self.save["player_health"]
         self.complete_initialize = True
+

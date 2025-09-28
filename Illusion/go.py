@@ -6,7 +6,7 @@ class GlobalObjects:
     def __init__(self):
         self.__uis = {}
         self.__fonts = {}
-        self.font_prefix = "./assets/fonts/" #fix this
+        self.font_prefix = "../assets/fonts/"
         self.__custom_objects = {}
 
     def add_ui(self,ui: UI):

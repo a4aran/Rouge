@@ -4,6 +4,7 @@ import pygame
 from pygame import SRCALPHA
 
 import c_objects.world
+import characters
 import current_game_run_data
 import gl_var
 import window_size
@@ -53,7 +54,11 @@ class GamePlaySC(Scene):
 
         temp.new_img("super_diamond_bg",importer.get_animated_sprite("super_indicator_hud")[0],super_diam_pos)
         temp.new_img("super_diamond",importer.get_animated_sprite("super_indicator_hud")[1],super_diam_pos)
-        self.super_diamond_sprites = [importer.get_animated_sprite("super_indicator_hud")[1],importer.get_animated_sprite("super_indicator_hud")[2]]
+        self.super_diamond_not_full_sprite = importer.get_animated_sprite("super_indicator_hud")[1]
+        self.super_diamond_full_character_sprite = {
+            "player0":importer.get_animated_sprite("super_indicator_hud")[2],
+            "shocker": importer.get_animated_sprite("super_indicator_hud")[3]
+        }
 
         temp.new_img("dmg_drop",importer.get_sprite("damage_hud"),dmg_pos)
         temp.new_text_display("dmg_amount",global_objects.get_font("text_font"),(dmg_pos[0],dmg_pos[1]+ 20))
@@ -183,9 +188,9 @@ class GamePlaySC(Scene):
                 self.super_percent = temp.player.character["ability"]["cooldown"][0] / temp.player.character["ability"]["cooldown"][1]
 
             if self.super_percent == 1:
-                self.super_diamond = self.super_diamond_sprites[1]
+                self.super_diamond = self.super_diamond_full_character_sprite[characters.characters[current_game_run_data.cur_run_data.selected_character]["name"]]
             else:
-                self.super_diamond = self.super_diamond_sprites[0]
+                self.super_diamond = self.super_diamond_not_full_sprite
                 self.super_diamond.set_alpha(255 * self.super_percent)
 
             if not temp.player.cooldown[2]:

@@ -29,11 +29,11 @@ lvl4 = {
 # -- Stats Provider -- #
 
 lvl1_stats = {
-    "damage": lambda data, wave, context, extra: [formulas.damage_upgrade(wave)],
+    "damage": lambda data, wave, context, extra: [formulas.damage_upgrade(wave,context["character_name"])],
     "pierce": lambda data, wave, context, extra: [1],
     "armor": lambda data, wave, context, extra: [1],
-    "bullet_speed": lambda data, wave, context, extra: [formulas.b_speed_upgrade(wave)],
-    "firerate": lambda data, wave, context, extra: [formulas.firerate_upgrade(wave)],
+    "bullet_speed": lambda data, wave, context, extra: [formulas.b_speed_upgrade(wave,context["character_name"])],
+    "firerate": lambda data, wave, context, extra: [formulas.firerate_upgrade(wave,context["character_name"])],
     "heal": lambda data, wave, contextm, extra: [data[0]]
 }
 lvl2_stats = {

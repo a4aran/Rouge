@@ -220,10 +220,14 @@ class Chaos(Boss):
         if self.phase + 1 == 1:
             world.enemy_projectiles.append(EnemyProj(pos,ang,200,2))
         else:
-            if random.random() < 0.3:
-                world.entities.append(SpawnProjectile(pos,ang,random.randint(200,600),["faster"],[1],250))
+            if len(world.entities) < 25:
+                if random.random() < 0.3:
+                    world.entities.append(SpawnProjectile(pos,ang,random.randint(200,600),["faster"],[1],250))
+                else:
+                    world.enemy_projectiles.append(EnemyProj(pos,ang,200,2))
             else:
                 world.enemy_projectiles.append(EnemyProj(pos,ang,200,2))
+                world.enemy_projectiles.append(EnemyProj(pos,ang-180,200,2))
 
     def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
         temp = pygame.Surface((128,128),pygame.SRCALPHA)
