@@ -10,7 +10,8 @@ from Illusion.frame_data_f import FrameData
 from Illusion.go import GlobalObjects
 from ar_math_helper import Circle
 from c_objects.entities import bosses
-from c_objects.entities.enemies import SimpleAIEnemy, FasterSAiEnemy, DoubleSAiEnemy, ShootingEnemy, Enemy
+from c_objects.entities.enemies import SimpleAIEnemy, FasterSAiEnemy, DoubleSAiEnemy, ShootingEnemy, Enemy, \
+    SpawnMarkerEntity
 from c_objects.entities.entity import Entity
 from c_objects.entities.player import Player
 from c_objects.entities.projectiles import Projectile
@@ -44,6 +45,8 @@ class World:
 
         self.upgrade = [False,0]
         self.just_loaded = False
+
+        self.spawn_cycles = 0
 
         self.textures = {
             "chaos": go.get_custom_object("chaos_boss_sprites"),
@@ -97,7 +100,7 @@ class World:
                         if isinstance(b, bosses.Chaos):
                             b.player_damaged_reset()
             self.projectiles = [p for p in self.projectiles if not p.should_delete]
-            self.deleted_entities_amount = sum(i.should_delete for i in self.entities)
+            self.deleted_entities_amount = sum(i.should_delete and i.lifesteal for i in self.entities if isinstance(i,Enemy))
             self.entities = [e for e in self.entities if not e.should_delete]
             self.enemy_projectiles = [ep for ep in self.enemy_projectiles if not ep.should_delete]
             self.boss = [b for b in self.boss if not b.should_delete]
@@ -108,8 +111,11 @@ class World:
                 for b in self.boss:
                     if isinstance(b,Enemy):
                         self.combined_boss_hp += b.health
-            elif len(self.entities) <= 0:
+            elif len(self.entities) <= 0 and self.spawn_cycles == 0:
                 self.wave_on = False
+
+            if len(self.entities) <= 3 and self.spawn_cycles > 0:
+                self.marker_spawn_cycle()
 
             if not self.wave_on:
                 gl_var.entities_id_counter = 0
@@ -128,7 +134,7 @@ class World:
                         self.vfx_to_show = None
 
     def start_wave(self):
-        current_game_run_data.save_manager.update(self)
+        current_game_run_data.save_manager.write_save_file(self)
         self.wave_count += 1
         self.is_boss_wave = self.wave_count % 10 == 0
 
@@ -137,8 +143,8 @@ class World:
         if self.is_boss_wave:
             boss_number = ((self.wave_count // 10 - 1) % 2)
 
-            hp_mult = ar_math_helper.formulas.boss_hp_mult(self.wave_count)
-            self.boss.append(bosses.boss_list[boss_number](self.w_size,hp_mult,self.textures["chaos"]))
+            difficultty_mult = ar_math_helper.formulas.difficult_mult(self.wave_count)
+            self.boss.append(bosses.boss_list[boss_number](self.w_size,difficultty_mult,self.textures["chaos"]))
 
             if boss_number == 0:
                 self.player.hitbox.pos.xy = (270,270)
@@ -150,12 +156,8 @@ class World:
                 if isinstance(b, bosses.Boss):
                     self.combined_boss_max_hp += b.max_hp
         else:
-            map_center = pygame.Vector2(self.w_size[0]/2,self.w_size[1]/2)
-            length_range = (150,int(self.w_size[0]/2 - 20))
-            for n in range(ar_math_helper.formulas.enemy_count(self.wave_count)):
-                vector = pygame.Vector2(random.randint(length_range[0],length_range[1]),0).rotate(random.randint(0,359))
-                try_pos = vector + map_center
-                self.spawn_enemy(try_pos)
+            self.spawn_cycles = max(1,int(self.wave_count/10 + 1))
+            self.marker_spawn_cycle()
             self.player.hitbox.pos.xy = (270,270)
         self.player.reset_cooldowns()
         self.wave_on = True
@@ -175,31 +177,43 @@ class World:
         self.pause_timer[0] = 0
         self.pause_timer[0] = 0
 
-    def spawn_enemy(self,pos: pygame.Vector2,type:str = None):
+    def create_spawn_marker(self, pos: pygame.Vector2):
+        classes = ["simple", "faster", "double", "shooter"]
+        chances = [100, 0, 0, 0]
+        if self.wave_count > 5:
+            chances[2] += self.wave_count * 3
+        if self.wave_count >= 8:
+            chances[1] += 15 * (self.wave_count - 4)
+        if self.wave_count >= 15:
+            chances[0] = 0
+            chances[3] = 30 + (self.wave_count - 15) * 10
+        if self.wave_count >= 25:
+            chances[1] += 10 * (self.wave_count - 4)
+            chances[3] = 30 + (self.wave_count - 15) * 15
+
+        chances = [max(0, c) for c in chances]
+        Chosen = random.choices(classes, weights=chances, k=1)[0]
+
+        self.entities.append(SpawnMarkerEntity(pos, Chosen))
+
+    def marker_spawn_cycle(self):
+        enemy_count_mult = 1.2 if self.wave_count < 10 else 0.6
+        map_center = pygame.Vector2(self.w_size[0] / 2, self.w_size[1] / 2)
+        length_range = (150, int(self.w_size[0] / 2 - 20))
+        for n in range(ar_math_helper.formulas.enemy_count(int(self.wave_count * enemy_count_mult))):
+            vector = pygame.Vector2(random.randint(length_range[0], length_range[1]), 0).rotate(random.randint(0, 359))
+            try_pos = vector + map_center
+            self.create_spawn_marker(try_pos)
+        self.spawn_cycles -= 1
+        self.spawn_cycles = max(self.spawn_cycles,0)
+
+    def spawn_enemy(self,pos: pygame.Vector2,type:str):
         classes = {"simple": SimpleAIEnemy,
                    "faster": FasterSAiEnemy,
                    "double": DoubleSAiEnemy,
                    "shooter":ShootingEnemy}
-        if type is None:
-            chances = [100,0,0,0]
-            if 5 < self.wave_count:
-                chances[2] += self.wave_count * 3
-            if self.wave_count >= 8:
-                chances[1] += 15 * (self.wave_count - 4)
-            if self.wave_count >= 15:
-                # chances[2] += min(20 * (self.wave_count - 14),70)
-                chances[0] = 0
-                chances[3] = 30 + (self.wave_count - 15) * 10
-            if self.wave_count >= 25:
-                chances[1] += 10 * (self.wave_count - 4)
-                chances[3] = 30 + (self.wave_count - 15) * 15
-
-            Chosen = random.choices(list(classes.keys()),weights=chances,k=1)[0]
-            scaling_hp,scaling_spd = self.get_scaling(Chosen)
-            self.entities.append(classes[Chosen](pos,health=scaling_hp,spd=scaling_spd))
-        else:
-            scaling_hp, scaling_spd = self.get_scaling(type)
-            self.entities.append(classes[type](pos, health=scaling_hp, spd=scaling_spd))
+        scaling_hp, scaling_spd = self.get_scaling(type)
+        self.entities.append(classes[type](pos, health=scaling_hp, spd=scaling_spd))
 
     def get_scaling(self,type: str):
         scaling = 35 * ar_math_helper.formulas.enemy_scaling(self.wave_count)
@@ -245,9 +259,9 @@ class World:
         self.just_loaded = False
 
         if current_game_run_data.cur_run_data.should_load_save:
-            current_game_run_data.cur_run_data.load_save(current_game_run_data.save_manager.upgrade_file_save_decoded)
+            current_game_run_data.cur_run_data.load_save(current_game_run_data.save_manager.loaded_save_file)
             self.player.reset()
-            self.load_other(current_game_run_data.save_manager.other_file_save_decoded)
+            self.load_other(current_game_run_data.save_manager.loaded_save_file)
             if self.wave_count != 0: self.wave_on =True
             current_game_run_data.cur_run_data.should_load_save = False
 
@@ -293,12 +307,8 @@ class World:
         self.start_wave()
 
     def load_other(self,data:str):
-        if data != "":
-            data = ast.literal_eval(data)
-            current_game_run_data.cur_run_data.heal_q = data["heal_q"]
-            current_game_run_data.cur_run_data.last_max_health_upgrade_wave = data["last_max_health_upgrade_wave"]
-            current_game_run_data.cur_run_data.add_max_hp = data["add_max_hp"]
+        if data is not None:
+            data = data["other"]
             self.wave_count = data["wave"]
-            current_game_run_data.cur_run_data.selected_character = data["selected_character"]
             self.player.save = data
             self.just_loaded = True

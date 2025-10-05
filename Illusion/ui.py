@@ -185,6 +185,9 @@ class UI:
             def set_constant_y_pos(self,y:float):
                 self.__constant_y = y
 
+            def get_text(self):
+                return self.__text
+
         class FormattedTextDisplay:
             def __init__(self,name: str,fonts: dict,center_pos: tuple[float,float]):
                 self.name = name

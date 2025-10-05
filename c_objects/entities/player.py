@@ -13,6 +13,7 @@ from c_objects.entities.entity import Entity
 from c_objects.entities.projectiles import PierceProj, FreezePP, HomingPP, Shockwave
 from typing import TYPE_CHECKING
 from characters import characters
+import upgrades_data as u_data
 if TYPE_CHECKING:
     from c_objects.world import World
 
@@ -61,10 +62,10 @@ class Player(Entity):
 
         self._compile_on_death_dict()
 
-        if cur_run_data.active_upgrades[2]["lifesteal"][0]:
+        if cur_run_data.active_stats[2]["lifesteal_bool"]:
             if world.deleted_entities_amount > 0:
                 for i in range(world.deleted_entities_amount):
-                    if cur_run_data.get_random_chance(cur_run_data.active_upgrades[2]["lifesteal"][1]):
+                    if cur_run_data.get_random_chance(cur_run_data.active_stats[2]["lifesteal_value"]):
                         cur_run_data.heal_q += 1
 
         self._update_health_and_max_hp()
@@ -185,7 +186,7 @@ class Player(Entity):
         self.hitbox.pos += velocity
 
     def _compile_on_death_dict(self):
-        self.on_death["shoot"] = cur_run_data.active_upgrades[2]["shoot_on_death"][0]
+        self.on_death["shoot"] = cur_run_data.active_stats[2]["shoot_on_death_bool"]
 
     def _update_stats_and_multipliers(self):
         self.multipliers = {
@@ -194,7 +195,7 @@ class Player(Entity):
             "bullet_speed": 1
         }
         if cur_run_data.request_player_upgrade or self.complete_initialize:
-            temp = cur_run_data.active_upgrades
+            temp = cur_run_data.active_stats
             temp2 = self.character["base_stats"]
             self.attack_damage = temp2["attack_dmg"] + temp[0]["damage"]
             self.pierce = temp2["pierce"] + temp[0]["pierce"]
@@ -203,14 +204,14 @@ class Player(Entity):
             self.armor = temp2["armor"] + temp[0]["armor"]
             self.complete_initialize = False
 
-        for lvl_2 in cur_run_data.active_upgrades[1]:
+        for lvl_2 in cur_run_data.active_stats[1]:
             if lvl_2 != "double_trouble":
-                if cur_run_data.active_upgrades[1][lvl_2][0]:
-                    self.multipliers[cur_run_data.active_upgrades[1][lvl_2][2]] += \
-                    cur_run_data.active_upgrades[1][lvl_2][3]
+                if cur_run_data.active_stats[1][lvl_2]:
+                    self.multipliers[u_data.lvl2[lvl_2][2]] += \
+                    u_data.lvl2[lvl_2][3]
 
         for kind in self.multipliers:
-            self.multipliers[kind] = max(0.2, self.multipliers[kind])
+            self.multipliers[kind] = max(0.01, self.multipliers[kind])
 
     def _update_health_and_max_hp(self):
         if cur_run_data.heal_q != 0:
@@ -222,15 +223,14 @@ class Player(Entity):
 
     def _prepare_shot(self, world, loc_dmg, loc_b_spd):
         angles = [angle_to_mouse(self.hitbox.pos + world.offset)]
-        data = cur_run_data.get_second_lvl("triple_shot")
-        if data[0]:
-            if cur_run_data.get_random_chance(data[1]):
+        if cur_run_data.get_second_lvl("triple_shot"):
+            if cur_run_data.get_random_chance(u_data.lvl2["triple_shot"][1]):
                 angles.append((angles[0] + 30) % 360)
                 angles.append((angles[0] + 330) % 360)
         self.bullet_counter += 1
 
-        freezing_b = cur_run_data.get_second_lvl("freezing_b")
-        homing_b = cur_run_data.get_second_lvl("homing_b")
+        freezing_b = [cur_run_data.get_second_lvl("freezing_b"),u_data.lvl2["freezing_b"][1]]
+        homing_b = [cur_run_data.get_second_lvl("homing_b"),u_data.lvl2["homing_b"][1]]
 
         if self.queued_projectile is None:
             wish_type = "normal"
@@ -250,8 +250,8 @@ class Player(Entity):
 
     def shoot(self,world: "World",type: str,angle,dmg: float, b_spd: float):
         bc = 0
-        if cur_run_data.active_upgrades[1]["bounce"][0]:
-            bc = cur_run_data.active_upgrades[1]["bounce"][1]
+        if cur_run_data.active_stats[1]["bounce"]:
+            bc = u_data.lvl2["bounce"][1]
         if type == "normal":
             world.projectiles.append(PierceProj(
                 pygame.Vector2(self.hitbox.radius, 0)
@@ -271,8 +271,8 @@ class Player(Entity):
     def shoot_custom(self,world: "World",type: str,angle,pos: pygame.Vector2):
         dmg, b_spd = self.bullet_stats_provider()
         bc = 0
-        if cur_run_data.active_upgrades[1]["bounce"][0]:
-            bc = cur_run_data.active_upgrades[1]["bounce"][1]
+        if cur_run_data.active_stats[1]["bounce"]:
+            bc = u_data.lvl2["bounce"][1]
         if type == "normal":
             world.projectiles.append(PierceProj(
                 pos, angle, dmg,
@@ -288,12 +288,13 @@ class Player(Entity):
             "damage": 1,
             "bullet_speed": 1
         }
-        for lvl_2 in cur_run_data.active_upgrades[1]:
+        for lvl_2 in cur_run_data.active_stats[1]:
             if lvl_2 != "double_trouble":
-                if cur_run_data.active_upgrades[1][lvl_2][0]:
-                    self.multipliers[cur_run_data.active_upgrades[1][lvl_2][2]] += cur_run_data.active_upgrades[1][lvl_2][3]
+                if cur_run_data.active_stats[1][lvl_2]:
+                    self.multipliers[u_data.lvl2[lvl_2][2]] += \
+                    u_data.lvl2[lvl_2][3]
         for kind in self.multipliers:
-            self.multipliers[kind] = max(0.2,self.multipliers[kind])
+            self.multipliers[kind] = max(0.01,self.multipliers[kind])
         loc_dmg = round(self.attack_damage * self.multipliers["damage"],1)
         loc_b_spd = round(self.b_speed * self.multipliers["bullet_speed"],1)
         return loc_dmg,loc_b_spd
@@ -333,7 +334,6 @@ class Player(Entity):
         self.base_super_cooldown = self.character["ability"]["cooldown"][1]
         self.health = self.character["base_stats"]["max_hp"]
         if self.save is not None:
-            self.max_health = self.save["player_max_hp"]
             self.health = self.save["player_health"]
         self.complete_initialize = True
 

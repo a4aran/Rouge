@@ -114,8 +114,8 @@ class FormulaProvider:
         return temp
 
     @staticmethod
-    def boss_hp_mult(wave):
-        return max(1, 1 + wave / 6) if wave > 11 else 1
+    def difficult_mult(wave):
+        return max(1, 1 + wave / 24) if wave > 11 else 1
 
     @staticmethod
     def enemy_scaling(wave):

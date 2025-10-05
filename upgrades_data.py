@@ -71,12 +71,12 @@ lvl3_stats = {
 lvl4_stats = {
         "shoot_on_death_up": lambda data, wave, context, extra: [
             data,
-            extra[2]["shoot_on_death"][1],
+            context["shoot_on_death_value"],
             extra[2]["shoot_on_death"][2],
         ],
         "lifesteal_up": lambda data, wave, context, extra: [
             round(data * 100),
-            round(extra[2]["lifesteal"][1] * context["chance_mult"] * 100),
+            round(context["lifesteal_value"] * context["chance_mult"] * 100),
             round(extra[2]["lifesteal"][2] * context["chance_mult"] * 100),
         ],
 }

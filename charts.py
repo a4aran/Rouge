@@ -8,7 +8,7 @@ formulas = {
     2: ("firerate", lambda count: [ar_math_helper.formulas.firerate_upgrade(i) for i in range(count)]),
     3: ("b_spd", lambda count: [ar_math_helper.formulas.b_speed_upgrade(i) for i in range(count)]),
     4: ("enemy_scaling", lambda count: [ar_math_helper.formulas.enemy_scaling(i) for i in range(count)]),
-    5: ("boss_hp", lambda count: [ar_math_helper.formulas.boss_hp_mult(i) for i in range(count)])
+    5: ("boss_hp", lambda count: [ar_math_helper.formulas.difficult_mult(i) for i in range(count)])
 }
 
 # Average multiple runs of a selected formula

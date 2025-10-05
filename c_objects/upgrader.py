@@ -4,6 +4,7 @@ from random import choices
 import pygame
 from pygame import SRCALPHA
 
+import upgrades_data
 from current_game_run_data import cur_run_data
 import gl_var
 import window_size
@@ -82,7 +83,12 @@ class Upgrader:
             kind = self.kind
             context = cur_run_data.get_context()
 
-            upgrades = cur_run_data.active_upgrades
+            upgrades = [
+                upgrades_data.lvl1,
+                upgrades_data.lvl2,
+                upgrades_data.lvl3,
+                upgrades_data.lvl4
+            ]
             if kind != "heal":
                 data = upgrades[level].get(kind)
                 if data is None:
@@ -120,22 +126,22 @@ class Upgrader:
                     cur_run_data.heal_q = 10
                     self.should_end = True
                 else:
-                    cur_run_data.active_upgrades[self.picked.level-1][self.picked.kind] += self.picked.stats[0]
+                    cur_run_data.active_stats[self.picked.level - 1][self.picked.kind] += self.picked.stats[0]
                     cur_run_data.round_active_upgrades()
                     cur_run_data.request_player_upgrade = True
                     self.should_end = True
             elif self.picked.level == 2:
-                cur_run_data.active_upgrades[self.picked.level - 1][self.picked.kind][0] = True
+                cur_run_data.active_stats[self.picked.level - 1][self.picked.kind] = True
                 cur_run_data.round_active_upgrades()
                 cur_run_data.request_player_upgrade = True
                 self.should_end = True
             elif self.picked.level == 3:
-                cur_run_data.active_upgrades[self.picked.level - 1][self.picked.kind][0] = True
+                cur_run_data.active_stats[self.picked.level - 1][self.picked.kind + "_bool"] = True
                 cur_run_data.round_active_upgrades()
                 cur_run_data.request_player_upgrade = True
                 self.should_end = True
             if self.picked.level == 4:
-                cur_run_data.active_upgrades[self.picked.level - 2][self.picked.kind.removesuffix("_up")][1] += cur_run_data.active_upgrades[3][self.picked.kind]
+                cur_run_data.active_stats[self.picked.level - 2][self.picked.kind.removesuffix("_up") + "_value"] += upgrades_data.lvl4[self.picked.kind]
                 cur_run_data.round_active_upgrades()
                 cur_run_data.request_player_upgrade = True
                 self.should_end = True
@@ -168,13 +174,11 @@ class Upgrader:
     def populate_upgrades(self,level,wave,player_hp,player_max_hp):
         upgrade_list = self.construct_available_upgrades_list(
             player_hp < (player_max_hp * (random.randint(100,140) / 100))/2)
-        print(level)
         if level == 2 and len(upgrade_list[1]) == 0: level = 1
         if level == 3 and len(upgrade_list[2]) == 0:
             level = 2
             if len(upgrade_list[1]) == 0: level = 1
 
-        print(level)
 
         self.upgrades = []
         self.upgrades.append(self._Upgrade(level,self.up_poses[0],wave,upgrade_list))
@@ -202,16 +206,14 @@ class Upgrader:
         level_1.append(chars[cur_run_data.selected_character]["upgradable_stat"])
         if add_heal: level_1.append("heal")
         level_2 = []
-        for kind in cur_run_data.active_upgrades[1]:
-            if not cur_run_data.get_second_lvl(kind)[0]: level_2.append(kind)
+        for kind in cur_run_data.active_stats[1]:
+            if not cur_run_data.get_second_lvl(kind): level_2.append(kind)
         level_3 = []
-        for kind in cur_run_data.active_upgrades[2]:
-            if not cur_run_data.active_upgrades[2][kind][0]: level_3.append(kind)
+        for kind in upgrades_data.lvl3:
+            if not cur_run_data.active_stats[2][kind + "_bool"]: level_3.append(kind)
         level_4 = []
         for name in cur_run_data.get_lvl_3_active_upgrades():
             level_4.append(name + "_up")
-        print(level_2)
-        print(cur_run_data.active_upgrades[1])
         return [level_1,level_2,level_3,level_4]
 
     def cooldown_on(self):

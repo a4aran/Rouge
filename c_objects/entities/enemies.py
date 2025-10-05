@@ -6,10 +6,34 @@ import pygame
 import ar_math_helper
 import gl_var
 from Illusion.frame_data_f import FrameData
+from Illusion.helper import c_helper
 from c_objects.entities import projectiles
 from c_objects.entities.entity import Entity
 from current_game_run_data import cur_run_data
 
+class SpawnMarkerEntity(Entity):
+    def __init__(self, pos: pygame.Vector2,entity_type: str):
+        super().__init__(pos, 12)
+        self.timer = c_helper.Timer(random.uniform(0.3,1.5))
+        self.timer.start()
+        self.entity_type = entity_type
+        self.rotation = random.randint(0,359)
+        self.lifesteal = False
+
+    def update(self,world: "World",frame_data: FrameData):
+        self.timer.update(frame_data.dt)
+        self.rotation += frame_data.dt * 30
+        self.rotation %= 360
+        if not self.timer.is_counting_down():
+            self.should_delete = True
+            world.spawn_enemy(self.hitbox.pos.copy(),self.entity_type)
+
+    def draw(self,surf: pygame.Surface,offset: pygame.Vector2):
+        surface = pygame.Surface((self.hitbox.radius*2,self.hitbox.radius*2),pygame.SRCALPHA)
+        surface.fill((255,0,0,255*self.timer.get_completion_percentage()))
+        surface = pygame.transform.rotate(surface,self.rotation)
+        blit_pos = self.hitbox.pos + offset - pygame.Vector2(surface.get_width()/2,surface.get_height()/2)
+        surf.blit(surface,blit_pos)
 
 class Enemy(Entity):
     def __init__(self, pos: pygame.Vector2, hitbox_radius: float,health: float,speed: float,dmg: float = 10,texture_name = None):
@@ -24,6 +48,7 @@ class Enemy(Entity):
         self.texture_name = texture_name
         self.knockback_amount = 0
         self.knockback_dir = 0
+        self.lifesteal = True
 
 
     def damage(self,world: "World",amount: float,death_info: dict,effects: list = False):
@@ -66,7 +91,7 @@ class Enemy(Entity):
                 valid_targets = [e for e in world.entities if e.id != self.id]
 
                 if valid_targets:
-                    shots = cur_run_data.active_upgrades[2]["shoot_on_death"][1]
+                    shots = cur_run_data.active_stats[2]["shoot_on_death"][1]
 
                     # pick unique targets if possible, otherwise allow repeats
                     if shots <= len(valid_targets):

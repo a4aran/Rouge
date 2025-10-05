@@ -59,7 +59,7 @@ def difficulty_curve(waves:int,runs_to_avg:int):
 
     # - Boss Scaling - #
     for wave in range(waves):
-        boss_scaling_list.append(formulas.boss_hp_mult(wave))
+        boss_scaling_list.append(formulas.difficult_mult(wave))
 
     # ! Difficulty Curve Calculation ! #
     difficulty_curve_list = []

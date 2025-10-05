@@ -82,7 +82,7 @@ class GamePlaySC(Scene):
 
         self.create_ui("boss_animation")
         ba_ui = self.get_ui("boss_animation")
-        temp_img = pygame.Surface((900,600),SRCALPHA)
+        temp_img = pygame.Surface((window_size.width,window_size.height),SRCALPHA)
         temp_img.fill((0,0,0,64))
         ba_ui.new_img("bg",temp_img,gl_var.window_center)
         ba_ui.new_animation("boss_shake",importer.get_animated_sprite("boss_animation_vfx"),gl_var.window_center,10)

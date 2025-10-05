@@ -134,9 +134,7 @@ class CharacterSelectionSC(Scene):
                     change_page = temp["change_page"]
                     temp["change_page"] = 0
         if change_page != 0:
-            print(change_page)
             self.character_page = max(min(self.characters - 1,self.character_page+change_page),0)
-            print(self.character_page)
         for i in range(self.characters):
             if i == self.character_page:
                 self.get_ui(f"character_{i}").should_show = True
@@ -150,6 +148,10 @@ class CharacterSelectionSC(Scene):
 
         super()._update(frame_data)
 
+    def on_changed_to(self,previous_scene_id):
+        super().on_changed_to(previous_scene_id)
+        current_game_run_data.save_manager.load_and_decode()
+
 class ChangeCharacterBTN(c_helper.button_base()):
     def __init__(self, identifier: str, center_pos: pygame.Vector2, rect_size: tuple[float, float],
                  animated_sprite: list, character_calc: int, sound: pygame.mixer.Sound = [None,None], delay=None):
@@ -158,7 +160,6 @@ class ChangeCharacterBTN(c_helper.button_base()):
 
     def on_click(self, data:dict):
         super().on_click(data)
-        print("click")
         data["change_page"] = self.operation
 
 class LoadSaveBTN(c_helper.button_base()):
@@ -214,4 +215,4 @@ class RunOverSC(Scene):
 
     def on_changed_to(self,previous_scene_id):
         current_game_run_data.cur_run_data.reset()
-        current_game_run_data.save_manager.reset()
+        current_game_run_data.save_manager.clear_save()
